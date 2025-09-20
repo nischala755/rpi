@@ -4,7 +4,7 @@ import time
 import sqlite3
 import json
 from datetime import datetime, timedelta
-from rpi_lcd import LCD
+from RPLCD.i2c import CharLCD
 
 # GPIO Pin Setup
 MOTION_PIN_DO = 18  # Digital output from PIR
@@ -13,8 +13,16 @@ TRIG_PIN = 24
 ECHO_PIN = 23
 LED_PIN = 21
 
-# LCD Setup
-lcd = LCD()
+# I2C LCD Setup (you may need to change the address)
+# Common addresses are 0x27, 0x3f, 0x26, 0x20
+try:
+    lcd = CharLCD('PCF8574', 0x27)  # Try 0x27 first
+except:
+    try:
+        lcd = CharLCD('PCF8574', 0x3f)  # Try 0x3f if 0x27 fails
+    except:
+        print("LCD not found! Check I2C connection and address")
+        exit(1)
 
 # Initialize GPIO
 GPIO.setmode(GPIO.BCM)
@@ -130,8 +138,9 @@ class FocusZoneController:
     
     def calibrate_baseline(self):
         """Calibrate the user's normal sitting position"""
-        lcd.text("Calibrating...", 1)
-        lcd.text("Sit normally", 2)
+        lcd.write_string("Calibrating...")
+        lcd.crlf()
+        lcd.write_string("Sit normally")
         time.sleep(3)
         
         distances = []
@@ -144,7 +153,7 @@ class FocusZoneController:
         if distances:
             self.baseline_distance = sum(distances) / len(distances)
             lcd.clear()
-            lcd.text(f"Baseline: {self.baseline_distance:.1f}cm", 1)
+            lcd.write_string(f"Baseline: {self.baseline_distance:.1f}cm")
             time.sleep(2)
             return True
         return False
@@ -176,9 +185,11 @@ class FocusZoneController:
     
     def display_status(self):
         """Update LCD with current status"""
+        lcd.clear()
         if not self.is_session_active:
-            lcd.text("Focus Zone Ready", 1)
-            lcd.text("Sit down to start", 2)
+            lcd.write_string("Focus Zone Ready")
+            lcd.crlf()
+            lcd.write_string("Sit down to start")
         else:
             session_duration = int((time.time() - self.session_start) / 60)
             
@@ -187,8 +198,9 @@ class FocusZoneController:
             else:
                 message = self.distraction_messages[self.distraction_count % len(self.distraction_messages)]
             
-            lcd.text(f"Focus: {self.focus_level}% T:{session_duration}m", 1)
-            lcd.text(message[:16], 2)
+            lcd.write_string(f"Focus:{self.focus_level}% T:{session_duration}m")
+            lcd.crlf()
+            lcd.write_string(message[:16])
     
     def start_session(self):
         """Start a new focus session"""
@@ -203,7 +215,7 @@ class FocusZoneController:
         self.total_focus_time = 0
         
         lcd.clear()
-        lcd.text("Session Started!", 1)
+        lcd.write_string("Session Started!")
         time.sleep(2)
         return True
     
@@ -230,8 +242,9 @@ class FocusZoneController:
         
         # Display session summary
         lcd.clear()
-        lcd.text(f"Session: {session_duration}m", 1)
-        lcd.text(f"Focus: {focus_percentage:.1f}%", 2)
+        lcd.write_string(f"Session: {session_duration}m")
+        lcd.crlf()
+        lcd.write_string(f"Focus: {focus_percentage:.1f}%")
         time.sleep(5)
         
         self.is_session_active = False

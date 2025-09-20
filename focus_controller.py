@@ -7,7 +7,8 @@ from datetime import datetime, timedelta
 from rpi_lcd import LCD
 
 # GPIO Pin Setup
-MOTION_PIN = 18
+MOTION_PIN_DO = 18  # Digital output from PIR
+MOTION_PIN_AO = 4   # Analog output from PIR (optional)
 TRIG_PIN = 24
 ECHO_PIN = 23
 LED_PIN = 21
@@ -17,7 +18,8 @@ lcd = LCD()
 
 # Initialize GPIO
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(MOTION_PIN, GPIO.IN)
+GPIO.setup(MOTION_PIN_DO, GPIO.IN)
+GPIO.setup(MOTION_PIN_AO, GPIO.IN)  # Optional analog input
 GPIO.setup(TRIG_PIN, GPIO.OUT)
 GPIO.setup(ECHO_PIN, GPIO.IN)
 GPIO.setup(LED_PIN, GPIO.OUT)
@@ -108,8 +110,23 @@ class FocusZoneController:
         return round(distance, 2)
     
     def detect_motion(self):
-        """Check if motion is detected"""
-        return GPIO.input(MOTION_PIN)
+        """Check if motion is detected using digital output"""
+        return GPIO.input(MOTION_PIN_DO)
+    
+    def get_motion_intensity(self):
+        """Get motion intensity from analog output (optional advanced feature)"""
+        # This would require an ADC like MCP3008 for true analog reading
+        # For now, we'll use digital reading with timing for intensity estimation
+        motion_start = time.time()
+        motion_count = 0
+        
+        # Count motion pulses over 1 second to estimate intensity
+        while time.time() - motion_start < 1:
+            if GPIO.input(MOTION_PIN_DO):
+                motion_count += 1
+            time.sleep(0.01)
+        
+        return motion_count  # Higher count = more motion/intensity
     
     def calibrate_baseline(self):
         """Calibrate the user's normal sitting position"""

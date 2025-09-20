@@ -1,3 +1,26 @@
+#Connections
+PIR Motion Sensor (4-pin):
+- VCC → 5V (Pin 2)
+- GND → GND (Pin 6)
+- DO → GPIO 18 (Pin 12) - Digital Output
+- AO → GPIO 4 (Pin 7) - Analog Output (optional for sensitivity)
+
+Ultrasonic Sensor (HC-SR04):
+- VCC → 5V (Pin 4)
+- GND → GND (Pin 14)
+- Trig → GPIO 24 (Pin 18)
+- Echo → GPIO 23 (Pin 16)
+
+LCD Display (16x2 I2C):
+- VCC → 5V (Pin 2) or 3.3V (Pin 1)
+- GND → GND (Pin 6)
+- SDA → GPIO 2 (Pin 3) - I2C Data
+- SCL → GPIO 3 (Pin 5) - I2C Clock
+
+LED:
+- Anode → GPIO 21 (Pin 40) via 220Ω resistor
+- Cathode → GND (Pin 39)
+
 # Update system
 sudo apt update && sudo apt upgrade -y
 
@@ -48,3 +71,5 @@ pygame.mixer.init()
 
 def play_focus_sound():
     pygame.mixer.Sound('focus_start.wav').play()
+
+

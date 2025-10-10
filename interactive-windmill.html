@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive PINN Windmill Digital Twin</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #001122, #003366, #87CEEB);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+        
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            z-index: 100;
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 4px solid #4CAF50;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Enhanced UI Panels */
+        .panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            z-index: 50;
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        #performance-panel {
+            top: 20px;
+            left: 20px;
+            width: 320px;
+        }
+        
+        #parameter-panel {
+            top: 20px;
+            right: 20px;
+            width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        #pinn-panel {
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+        }
+        
+        #scenario-panel {
+            bottom: 20px;
+            left: 20px;
+            width: 280px;
+        }
+        
+        .metric {
+            margin: 12px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .metric-value {
+            font-weight: bold;
+            color: #4CAF50;
+            font-family: 'Courier New', monospace;
+            min-width: 80px;
+            text-align: right;
+        }
+        
+        .metric-bar {
+            width: 120px;
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-left: 10px;
+        }
+        
+        .metric-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.3s ease;
+        }
+        
+        /* Parameter Controls */
+        .parameter-group {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .parameter-group h4 {
+            margin: 0 0 15px 0;
+            color: #4CAF50;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .parameter-control {
+            margin: 12px 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .parameter-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .parameter-value {
+            color: #4CAF50;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .parameter-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .parameter-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        
+        .parameter-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        
+        /* Buttons */
+        button {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border: none;
+            color: white;
+            padding: 12px 18px;
+            margin: 8px 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            font-weight: 500;
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, #45a049, #4CAF50);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        button.scenario-btn {
+            width: 100%;
+            margin: 5px 0;
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+        }
+        
+        button.scenario-btn:hover {
+            background: linear-gradient(135deg, #1976D2, #2196F3);
+        }
+        
+        button.emergency {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+        }
+        
+        button.emergency:hover {
+            background: linear-gradient(135deg, #d32f2f, #f44336);
+        }
+        
+        /* PINN Visualization */
+        .neural-network {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            height: 120px;
+        }
+        
+        .layer {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            height: 100%;
+        }
+        
+        .neuron {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4CAF50;
+            position: relative;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        
+        .neuron.active {
+            background: #FF9800;
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.7);
+            animation: pulse-active 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        
+        @keyframes pulse-active {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        .connection {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, #4CAF50, transparent);
+            animation: flow 2s infinite;
+        }
+        
+        @keyframes flow {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0.3; }
+        }
+        
+        /* Impact Indicators */
+        .impact-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+        
+        .impact-positive { background: #4CAF50; }
+        .impact-negative { background: #f44336; }
+        .impact-neutral { background: #9E9E9E; }
+        
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .panel { font-size: 12px; padding: 15px; }
+            #parameter-panel { width: 300px; }
+            #performance-panel { width: 280px; }
+        }
+        
+        /* Panel Toggle */
+        .panel-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        .panel.minimized {
+            height: 40px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="loading">
+            <h2>🧠 Loading Interactive PINN Digital Twin</h2>
+            <div class="loading-spinner"></div>
+            <div id="progress">Initializing Neural Network...</div>
+        </div>
+        
+        <!-- Performance Monitoring Panel -->
+        <div id="performance-panel" class="panel" style="display: none;">
+            <button class="panel-toggle" onclick="togglePanel('performance-panel')">−</button>
+            <h3>📊 Performance Metrics</h3>
+            <div class="metric">
+                <span>🔋 Power Output:</span>
+                <span class="metric-value" id="power-output">0 kW</span>
+                <div class="metric-bar"><div class="metric-bar-fill" id="power-bar"></div></div>
+            </div>
+            <div class="metric">
+                <span>💨 Wind Speed:</span>
+                <span class="metric-value" id="wind-speed">0 m/s</span>
+                <div class="metric-bar"><div class="metric-bar-fill" id="wind-bar"></div></div>
+            </div>
+            <div class="metric">
+                <span>⚡ Blade RPM:</span>
+                <span class="metric-value" id="blade-rpm">0</span>
+                <div class="metric-bar"><div class="metric-bar-fill" id="rpm-bar"></div></div>
+            </div>
+            <div class="metric">
+                <span>📊 Efficiency:</span>
+                <span class="metric-value" id="efficiency">0%</span>
+                <div class="metric-bar"><div class="metric-bar-fill" id="efficiency-bar"></div></div>
+            </div>
+            <div class="metric">
+                <span>🎯 Tip Speed Ratio:</span>
+                <span class="metric-value" id="tip-speed-ratio">0</span>
+            </div>
+            <div class="metric">
+                <span>🌊 Turbulence:</span>
+                <span class="metric-value" id="turbulence">Low</span>
+            </div>
+            <div class="metric">
+                <span>🔄 Nacelle Yaw:</span>
+                <span class="metric-value" id="nacelle-yaw">0°</span>
+            </div>
+        </div>
+        
+        <!-- Interactive Parameter Panel -->
+        <div id="parameter-panel" class="panel" style="display: none;">
+            <button class="panel-toggle" onclick="togglePanel('parameter-panel')">−</button>
+            <h3>🎛️ Interactive Parameters</h3>
+            
+            <div class="parameter-group">
+                <h4>🌬️ Wind Conditions</h4>
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span>Wind Speed</span>
+                        <span class="parameter-value" id="wind-speed-value">8.5 m/s</span>
+                    </div>
+                    <input type="range" class="parameter-slider" id="wind-speed-slider" 
+                           min="0" max="30" value="8.5" step="0.1">
+                </div>
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span>Wind Direction</span>
+                        <span class="parameter-value" id="wind-direction-value">0°</span>
+                    </div>
+                    <input type="range" class="parameter-slider" id="wind-direction-slider" 
+                           min="-180" max="180" value="0" step="1">
+                </div>
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span>Turbulence Intensity</span>
+                        <span class="parameter-value" id="turbulence-value">10%</span>
+                    </div>
+                    <input type="range" class="parameter-slider" id="turbulence-slider" 
+                           min="0" max="50" value="10" step="1">
+                </div>
+            </div>
+            
+            <div class="parameter-group">
+                <h4>⚙️ Turbine Control</h4>
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span>Blade Pitch</span>
+                        <span class="parameter-value" id="blade-pitch-value">0°</span>
+                    </div>
+                    <input type="range" class="parameter-slider" id="blade-pitch-slider" 
+                           min="-5" max="35" value="0" step="0.5">
+                </div>
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span>Nacelle Yaw Target</span>
+                        <span class="parameter-value" id="yaw-target-value">0°</span>
+                    </div>
+                    <input type="range" class="parameter-slider" id="yaw-target-slider" 
+                           min="-180" max="180" value="0" step="1">
+                </div>
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span>Generator Load</span>
+                        <span class="parameter-value" id="generator-load-value">100%</span>
+                    </div>
+                    <input type="range" class="parameter-slider" id="generator-load-slider" 
+                           min="0" max="120" value="100" step="5">
+                </div>
+            </div>
+            
+            <div class="parameter-group">
+                <h4>🧠 PINN Settings</h4>
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span>Learning Rate</span>
+                        <span class="parameter-value" id="learning-rate-value">0.001</span>
+                    </div>
+                    <input type="range" class="parameter-slider" id="learning-rate-slider" 
+                           min="0.0001" max="0.01" value="0.001" step="0.0001">
+                </div>
+                <div class="parameter-control">
+                    <div class="parameter-label">
+                        <span>Physics Weight</span>
+                        <span class="parameter-value" id="physics-weight-value">1.0</span>
+                    </div>
+                    <input type="range" class="parameter-slider" id="physics-weight-slider" 
+                           min="0.1" max="5.0" value="1.0" step="0.1">
+                </div>
+            </div>
+        </div>
+        
+        <!-- PINN Visualization Panel -->
+        <div id="pinn-panel" class="panel" style="display: none;">
+            <button class="panel-toggle" onclick="togglePanel('pinn-panel')">−</button>
+            <h3>🧠 PINN Neural Network</h3>
+            <div class="neural-network">
+                <div class="layer">
+                    <div class="neuron" id="input-1"></div>
+                    <div class="neuron" id="input-2"></div>
+                    <div class="neuron" id="input-3"></div>
+                    <div class="neuron" id="input-4"></div>
+                    <div class="neuron" id="input-5"></div>
+                </div>
+                <div class="layer">
+                    <div class="neuron" id="hidden1-1"></div>
+                    <div class="neuron" id="hidden1-2"></div>
+                    <div class="neuron" id="hidden1-3"></div>
+                    <div class="neuron" id="hidden1-4"></div>
+                    <div class="neuron" id="hidden1-5"></div>
+                    <div class="neuron" id="hidden1-6"></div>
+                </div>
+                <div class="layer">
+                    <div class="neuron" id="hidden2-1"></div>
+                    <div class="neuron" id="hidden2-2"></div>
+                    <div class="neuron" id="hidden2-3"></div>
+                    <div class="neuron" id="hidden2-4"></div>
+                </div>
+                <div class="layer">
+                    <div class="neuron" id="output-1"></div>
+                    <div class="neuron" id="output-2"></div>
+                    <div class="neuron" id="output-3"></div>
+                    <div class="neuron" id="output-4"></div>
+                </div>
+            </div>
+            <div class="metric">
+                <span>🔮 Prediction:</span>
+                <span class="metric-value" id="pinn-prediction">Optimal Flow</span>
+            </div>
+            <div class="metric">
+                <span>📈 Accuracy:</span>
+                <span class="metric-value" id="model-accuracy">98.5%</span>
+            </div>
+            <div class="metric">
+                <span>⚡ Training Loss:</span>
+                <span class="metric-value" id="training-loss">0.001</span>
+            </div>
+        </div>
+        
+        <!-- Scenario Panel -->
+        <div id="scenario-panel" class="panel" style="display: none;">
+            <button class="panel-toggle" onclick="togglePanel('scenario-panel')">−</button>
+            <h3>🎭 Scenario Presets</h3>
+            <button class="scenario-btn" onclick="loadScenario('calm')">🌤️ Calm Weather</button>
+            <button class="scenario-btn" onclick="loadScenario('optimal')">⚡ Optimal Conditions</button>
+            <button class="scenario-btn" onclick="loadScenario('storm')">⛈️ Storm Conditions</button>
+            <button class="scenario-btn" onclick="loadScenario('maintenance')">🔧 Maintenance Mode</button>
+            <button class="scenario-btn" onclick="loadScenario('turbulent')">🌪️ High Turbulence</button>
+            
+            <h4 style="margin-top: 20px;">🎮 Controls</h4>
+            <button id="vr-button" disabled>🥽 Enter VR</button>
+            <button id="ar-button" disabled>📱 Enter AR</button>
+            <button id="toggle-animation">⏸️ Pause</button>
+            <button class="emergency" id="emergency-stop">🛑 Emergency Stop</button>
+        </div>
+    </div>
+
+    <!-- Dependencies -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Global variables
+        let scene, camera, renderer, windmill = {};
+        let animationRunning = true;
+        let controls;
+        
+        // Interactive parameters
+        let params = {
+            windSpeed: 8.5,
+            windDirection: 0,
+            turbulenceIntensity: 0.1,
+            bladePitch: 0,
+            nacelleYawTarget: 0,
+            generatorLoad: 100,
+            learningRate: 0.001,
+            physicsWeight: 1.0
+        };
+        
+        // Physics state
+        let bladeRPM = 0;
+        let nacelleYaw = 0;
+        let powerOutput = 0;
+        let tipSpeedRatio = 0;
+        let emergencyStop = false;
+        
+        // PINN variables
+        let pinnModel = null;
+        let trainingHistory = [];
+        let windField = [];
+        let windParticles = null;
+        
+        // Windmill specifications
+        const WINDMILL_PARAMS = {
+            bladeLength: 15,
+            hubHeight: 26,
+            ratedPower: 2000,
+            cutInSpeed: 3,
+            ratedSpeed: 12,
+            cutOutSpeed: 25,
+            maxRPM: 30,
+            bladeInertia: 1000
+        };
+
+        // Scenarios
+        const SCENARIOS = {
+            calm: { windSpeed: 4, turbulence: 0.05, direction: 0 },
+            optimal: { windSpeed: 12, turbulence: 0.1, direction: 0 },
+            storm: { windSpeed: 22, turbulence: 0.4, direction: 45 },
+            maintenance: { windSpeed: 0, turbulence: 0, direction: 0 },
+            turbulent: { windSpeed: 15, turbulence: 0.5, direction: -30 }
+        };
+
+        // Progress tracking
+        function updateProgress(message) {
+            const progressEl = document.getElementById('progress');
+            if (progressEl) {
+                progressEl.textContent = message;
+            }
+            console.log('🔄 ' + message);
+        }
+
+        // Initialize the interactive application
+        async function init() {
+            try {
+                updateProgress('Setting up interactive 3D scene...');
+                await setupAdvancedScene();
+                
+                updateProgress('Building interactive windmill...');
+                await createAdvancedWindmill();
+                
+                updateProgress('Implementing advanced lighting...');
+                setupAdvancedLighting();
+                
+                updateProgress('Creating interactive PINN model...');
+                await initializeInteractivePINN();
+                
+                updateProgress('Setting up parameter controls...');
+                setupParameterControls();
+                
+                updateProgress('Creating advanced particle systems...');
+                createAdvancedParticles();
+                
+                updateProgress('Setting up WebXR...');
+                setupWebXR();
+                
+                updateProgress('Finalizing interactive controls...');
+                setupInteractiveControls();
+                
+                // Show all UI panels
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('performance-panel').style.display = 'block';
+                document.getElementById('parameter-panel').style.display = 'block';
+                document.getElementById('pinn-panel').style.display = 'block';
+                document.getElementById('scenario-panel').style.display = 'block';
+                
+                // Start animation loop
+                animate();
+                
+                console.log('✅ Interactive PINN Windmill Digital Twin initialized!');
+                
+            } catch (error) {
+                console.error('❌ Interactive initialization failed:', error);
+                showError(error);
+            }
+        }
+
+        function showError(error) {
+            document.getElementById('loading').innerHTML = `
+                <div style="background: rgba(255,0,0,0.1); padding: 20px; border-radius: 15px; max-width: 500px;">
+                    <h3 style="color: #ff4444;">⚠️ Interactive Loading Error</h3>
+                    <p style="color: white; margin: 10px 0;">${error.message}</p>
+                    <p style="color: #ccc; font-size: 12px;">Interactive features require modern browser support</p>
+                    <button onclick="location.reload()" style="margin-top: 15px; padding: 15px 25px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                        🔄 Retry Interactive Loading
+                    </button>
+                </div>
+            `;
+        }
+
+        function setupAdvancedScene() {
+            return new Promise((resolve, reject) => {
+                try {
+                    scene = new THREE.Scene();
+                    scene.background = new THREE.Color(0x001122);
+                    
+                    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+                    camera.position.set(15, 20, 40);
+                    
+                    renderer = new THREE.WebGLRenderer({ 
+                        antialias: true,
+                        powerPreference: "high-performance"
+                    });
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                    renderer.shadowMap.enabled = true;
+                    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                    renderer.outputColorSpace = THREE.SRGBColorSpace;
+                    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                    renderer.toneMappingExposure = 1.2;
+                    
+                    if (renderer.xr) {
+                        renderer.xr.enabled = true;
+                    }
+                    
+                    document.getElementById('container').appendChild(renderer.domElement);
+                    
+                    controls = new OrbitControls(camera, renderer.domElement);
+                    controls.enableDamping = true;
+                    controls.dampingFactor = 0.02;
+                    controls.maxDistance = 200;
+                    controls.minDistance = 10;
+                    controls.maxPolarAngle = Math.PI * 0.48;
+                    controls.target.set(0, 15, 0);
+                    
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+
+        function createAdvancedWindmill() {
+            return new Promise((resolve) => {
+                try {
+                    windmill.group = new THREE.Group();
+                    
+                    // Enhanced tower
+                    const towerGeometry = new THREE.CylinderGeometry(0.6, 1.4, 25, 32);
+                    const towerMaterial = new THREE.MeshStandardMaterial({ 
+                        color: 0xd0d0d0,
+                        roughness: 0.7,
+                        metalness: 0.1
+                    });
+                    windmill.tower = new THREE.Mesh(towerGeometry, towerMaterial);
+                    windmill.tower.position.y = 12.5;
+                    windmill.tower.castShadow = true;
+                    windmill.tower.receiveShadow = true;
+                    windmill.group.add(windmill.tower);
+                    
+                    // Enhanced nacelle
+                    const nacelleGeometry = new THREE.BoxGeometry(5, 2.5, 2);
+                    const nacelleMaterial = new THREE.MeshStandardMaterial({ 
+                        color: 0xffffff,
+                        roughness: 0.3,
+                        metalness: 0.7
+                    });
+                    windmill.nacelle = new THREE.Mesh(nacelleGeometry, nacelleMaterial);
+                    windmill.nacelle.position.y = 26;
+                    windmill.nacelle.castShadow = true;
+                    windmill.group.add(windmill.nacelle);
+                    
+                    // Enhanced hub
+                    const hubGeometry = new THREE.SphereGeometry(1, 32, 32);
+                    const hubMaterial = new THREE.MeshStandardMaterial({ 
+                        color: 0x333333,
+                        roughness: 0.4,
+                        metalness: 0.8
+                    });
+                    windmill.hub = new THREE.Mesh(hubGeometry, hubMaterial);
+                    windmill.hub.position.set(0, 26, 2.5);
+                    windmill.hub.castShadow = true;
+                    windmill.group.add(windmill.hub);
+                    
+                    // Create advanced aerodynamic blades
+                    windmill.blades = new THREE.Group();
+                    windmill.individualBlades = [];
+                    
+                    for (let i = 0; i < 3; i++) {
+                        const bladeGroup = new THREE.Group();
+                        
+                        const bladeShape = new THREE.Shape();
+                        bladeShape.moveTo(0, 0);
+                        bladeShape.lineTo(0.2, 1);
+                        bladeShape.lineTo(0.1, 14);
+                        bladeShape.lineTo(-0.1, 14.5);
+                        bladeShape.lineTo(-0.2, 0.5);
+                        bladeShape.lineTo(0, 0);
+                        
+                        const extrudeSettings = {
+                            depth: 0.3,
+                            bevelEnabled: true,
+                            bevelSegments: 8,
+                            steps: 2,
+                            bevelSize: 0.05,
+                            bevelThickness: 0.05
+                        };
+                        
+                        const bladeGeometry = new THREE.ExtrudeGeometry(bladeShape, extrudeSettings);
+                        const bladeMaterial = new THREE.MeshStandardMaterial({ 
+                            color: 0xf8f8f8,
+                            roughness: 0.2,
+                            metalness: 0.1
+                        });
+                        
+                        const blade = new THREE.Mesh(bladeGeometry, bladeMaterial);
+                        blade.position.y = 0.5;
+                        blade.position.z = -0.15;
+                        blade.castShadow = true;
+                        blade.receiveShadow = true;
+                        
+                        bladeGroup.add(blade);
+                        bladeGroup.rotation.z = (i * Math.PI * 2) / 3;
+                        windmill.blades.add(bladeGroup);
+                        windmill.individualBlades.push(bladeGroup);
+                    }
+                    
+                    windmill.blades.position.set(0, 26, 2.5);
+                    windmill.group.add(windmill.blades);
+                    
+                    // Enhanced ground
+                    const groundGeometry = new THREE.PlaneGeometry(400, 400, 100, 100);
+                    const vertices = groundGeometry.attributes.position.array;
+                    
+                    for (let i = 0; i < vertices.length; i += 3) {
+                        vertices[i + 2] += Math.sin(vertices[i] * 0.01) * Math.cos(vertices[i + 1] * 0.01) * 2;
+                    }
+                    
+                    groundGeometry.attributes.position.needsUpdate = true;
+                    groundGeometry.computeVertexNormals();
+                    
+                    const groundMaterial = new THREE.MeshStandardMaterial({ 
+                        color: 0x4a5c2a,
+                        roughness: 0.9,
+                        metalness: 0.0
+                    });
+                    
+                    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                    ground.rotation.x = -Math.PI / 2;
+                    ground.receiveShadow = true;
+                    scene.add(ground);
+                    
+                    scene.add(windmill.group);
+                    resolve();
+                } catch (error) {
+                    console.error('Windmill creation failed:', error);
+                    resolve();
+                }
+            });
+        }
+
+        function setupAdvancedLighting() {
+            const ambientLight = new THREE.AmbientLight(0x404080, 0.3);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+            directionalLight.position.set(100, 200, 100);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 4096;
+            directionalLight.shadow.mapSize.height = 4096;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 1000;
+            directionalLight.shadow.camera.left = -100;
+            directionalLight.shadow.camera.right = 100;
+            directionalLight.shadow.camera.top = 100;
+            directionalLight.shadow.camera.bottom = -100;
+            directionalLight.shadow.bias = -0.0001;
+            scene.add(directionalLight);
+            
+            const skyLight = new THREE.HemisphereLight(0x87CEEB, 0x4a5c2a, 0.8);
+            scene.add(skyLight);
+            
+            const rimLight = new THREE.DirectionalLight(0x6699ff, 0.5);
+            rimLight.position.set(-50, 50, -50);
+            scene.add(rimLight);
+            
+            scene.fog = new THREE.FogExp2(0x87CEEB, 0.001);
+        }
+
+        async function initializeInteractivePINN() {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js';
+            document.head.appendChild(script);
+            
+            return new Promise((resolve) => {
+                script.onload = async () => {
+                    try {
+                        pinnModel = tf.sequential({
+                            layers: [
+                                tf.layers.dense({ inputShape: [5], units: 64, activation: 'tanh' }),
+                                tf.layers.dense({ units: 128, activation: 'tanh' }),
+                                tf.layers.dense({ units: 128, activation: 'tanh' }),
+                                tf.layers.dense({ units: 64, activation: 'tanh' }),
+                                tf.layers.dense({ units: 4, activation: 'linear' })
+                            ]
+                        });
+                        
+                        pinnModel.compile({
+                            optimizer: tf.train.adam(params.learningRate),
+                            loss: 'meanSquaredError',
+                            metrics: ['mae']
+                        });
+                        
+                        await trainInteractivePINN();
+                        console.log('✅ Interactive PINN model initialized');
+                        resolve();
+                    } catch (error) {
+                        console.warn('PINN initialization failed, using simplified model');
+                        resolve();
+                    }
+                };
+                
+                script.onerror = () => {
+                    console.warn('TensorFlow.js failed to load');
+                    resolve();
+                };
+            });
+        }
+
+        async function trainInteractivePINN() {
+            const numSamples = 1000;
+            const inputs = [];
+            const outputs = [];
+            
+            for (let i = 0; i < numSamples; i++) {
+                const x = (Math.random() - 0.5) * 100;
+                const y = Math.random() * 50;
+                const z = (Math.random() - 0.5) * 100;
+                const t = Math.random() * 10;
+                const windSpeed = params.windSpeed + (Math.random() - 0.5) * 5;
+                
+                const distance = Math.sqrt(x*x + z*z);
+                const wake = distance > 2 ? 1 : Math.exp(-(2-distance));
+                
+                const vx = windSpeed * wake * (1 + params.turbulenceIntensity * Math.sin(t));
+                const vy = 0.1 * windSpeed * Math.sin(x * 0.1) * wake;
+                const vz = 0.05 * windSpeed * Math.cos(z * 0.1) * wake;
+                const pressure = 101325 - 0.5 * 1.225 * (vx*vx + vy*vy + vz*vz);
+                
+                inputs.push([x/100, y/50, z/100, t/10, windSpeed/20]);
+                outputs.push([vx/20, vy/20, vz/20, (pressure-101325)/1000]);
+            }
+            
+            const xs = tf.tensor2d(inputs);
+            const ys = tf.tensor2d(outputs);
+            
+            const history = await pinnModel.fit(xs, ys, {
+                epochs: 50,
+                batchSize: 32,
+                verbose: 0
+            });
+            
+            trainingHistory = history.history;
+            xs.dispose();
+            ys.dispose();
+        }
+
+        function setupParameterControls() {
+            // Wind Speed Control
+            const windSpeedSlider = document.getElementById('wind-speed-slider');
+            const windSpeedValue = document.getElementById('wind-speed-value');
+            
+            windSpeedSlider.addEventListener('input', (e) => {
+                params.windSpeed = parseFloat(e.target.value);
+                windSpeedValue.textContent = `${params.windSpeed.toFixed(1)} m/s`;
+                updatePINNVisualization();
+            });
+            
+            // Wind Direction Control
+            const windDirectionSlider = document.getElementById('wind-direction-slider');
+            const windDirectionValue = document.getElementById('wind-direction-value');
+            
+            windDirectionSlider.addEventListener('input', (e) => {
+                params.windDirection = parseInt(e.target.value);
+                windDirectionValue.textContent = `${params.windDirection}°`;
+                updatePINNVisualization();
+            });
+            
+            // Turbulence Control
+            const turbulenceSlider = document.getElementById('turbulence-slider');
+            const turbulenceValue = document.getElementById('turbulence-value');
+            
+            turbulenceSlider.addEventListener('input', (e) => {
+                params.turbulenceIntensity = parseInt(e.target.value) / 100;
+                turbulenceValue.textContent = `${parseInt(e.target.value)}%`;
+                updatePINNVisualization();
+            });
+            
+            // Blade Pitch Control
+            const bladePitchSlider = document.getElementById('blade-pitch-slider');
+            const bladePitchValue = document.getElementById('blade-pitch-value');
+            
+            bladePitchSlider.addEventListener('input', (e) => {
+                params.bladePitch = parseFloat(e.target.value);
+                bladePitchValue.textContent = `${params.bladePitch.toFixed(1)}°`;
+            });
+            
+            // Yaw Target Control
+            const yawTargetSlider = document.getElementById('yaw-target-slider');
+            const yawTargetValue = document.getElementById('yaw-target-value');
+            
+            yawTargetSlider.addEventListener('input', (e) => {
+                params.nacelleYawTarget = parseInt(e.target.value);
+                yawTargetValue.textContent = `${params.nacelleYawTarget}°`;
+            });
+            
+            // Generator Load Control
+            const generatorLoadSlider = document.getElementById('generator-load-slider');
+            const generatorLoadValue = document.getElementById('generator-load-value');
+            
+            generatorLoadSlider.addEventListener('input', (e) => {
+                params.generatorLoad = parseInt(e.target.value);
+                generatorLoadValue.textContent = `${params.generatorLoad}%`;
+            });
+            
+            // Learning Rate Control
+            const learningRateSlider = document.getElementById('learning-rate-slider');
+            const learningRateValue = document.getElementById('learning-rate-value');
+            
+            learningRateSlider.addEventListener('input', (e) => {
+                params.learningRate = parseFloat(e.target.value);
+                learningRateValue.textContent = params.learningRate.toFixed(4);
+                if (pinnModel) {
+                    pinnModel.compile({
+                        optimizer: tf.train.adam(params.learningRate),
+                        loss: 'meanSquaredError',
+                        metrics: ['mae']
+                    });
+                }
+            });
+            
+            // Physics Weight Control
+            const physicsWeightSlider = document.getElementById('physics-weight-slider');
+            const physicsWeightValue = document.getElementById('physics-weight-value');
+            
+            physicsWeightSlider.addEventListener('input', (e) => {
+                params.physicsWeight = parseFloat(e.target.value);
+                physicsWeightValue.textContent = params.physicsWeight.toFixed(1);
+            });
+        }
+
+        function createAdvancedParticles() {
+            const particleCount = 5000;
+            const particles = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const velocities = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            const sizes = new Float32Array(particleCount);
+            
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 200;
+                positions[i * 3 + 1] = Math.random() * 60;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
+                
+                velocities[i * 3] = params.windSpeed + (Math.random() - 0.5) * 2;
+                velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.5;
+                velocities[i * 3 + 2] = (Math.random() - 0.5) * 1;
+                
+                const speed = Math.sqrt(velocities[i*3]**2 + velocities[i*3+1]**2 + velocities[i*3+2]**2);
+                colors[i * 3] = Math.min(speed / 15, 1);
+                colors[i * 3 + 1] = 0.8;
+                colors[i * 3 + 2] = 1 - Math.min(speed / 15, 1);
+                
+                sizes[i] = 0.5 + Math.random() * 1.5;
+            }
+            
+            particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            particles.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+            particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            
+            const particleMaterial = new THREE.PointsMaterial({
+                size: 1,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: true
+            });
+            
+            windParticles = new THREE.Points(particles, particleMaterial);
+            scene.add(windParticles);
+        }
+
+        function setupWebXR() {
+            if (navigator.xr) {
+                navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+                    if (supported) {
+                        document.getElementById('vr-button').disabled = false;
+                    }
+                }).catch(() => {});
+                
+                navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+                    if (supported) {
+                        document.getElementById('ar-button').disabled = false;
+                    }
+                }).catch(() => {});
+            }
+        }
+
+        function setupInteractiveControls() {
+            document.getElementById('vr-button').addEventListener('click', enterVR);
+            document.getElementById('ar-button').addEventListener('click', enterAR);
+            document.getElementById('toggle-animation').addEventListener('click', toggleAnimation);
+            document.getElementById('emergency-stop').addEventListener('click', toggleEmergencyStop);
+            
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        async function enterVR() {
+            try {
+                if (navigator.xr) {
+                    const session = await navigator.xr.requestSession('immersive-vr');
+                    renderer.xr.setSession(session);
+                    console.log('🥽 Entered VR mode');
+                }
+            } catch (error) {
+                alert('VR not supported or failed to start');
+            }
+        }
+
+        async function enterAR() {
+            try {
+                if (navigator.xr) {
+                    const session = await navigator.xr.requestSession('immersive-ar');
+                    renderer.xr.setSession(session);
+                    console.log('📱 Entered AR mode');
+                }
+            } catch (error) {
+                alert('AR not supported or failed to start');
+            }
+        }
+
+        function toggleAnimation() {
+            animationRunning = !animationRunning;
+            document.getElementById('toggle-animation').innerHTML = 
+                animationRunning ? '⏸️ Pause' : '▶️ Resume';
+        }
+
+        function toggleEmergencyStop() {
+            emergencyStop = !emergencyStop;
+            document.getElementById('emergency-stop').innerHTML = 
+                emergencyStop ? '🟢 Resume Operation' : '🛑 Emergency Stop';
+        }
+
+        // Scenario loading
+        window.loadScenario = function(scenarioName) {
+            const scenario = SCENARIOS[scenarioName];
+            if (scenario) {
+                // Update parameters
+                params.windSpeed = scenario.windSpeed;
+                params.windDirection = scenario.direction;
+                params.turbulenceIntensity = scenario.turbulence;
+                
+                // Update UI sliders
+                document.getElementById('wind-speed-slider').value = scenario.windSpeed;
+                document.getElementById('wind-speed-value').textContent = `${scenario.windSpeed.toFixed(1)} m/s`;
+                
+                document.getElementById('wind-direction-slider').value = scenario.direction;
+                document.getElementById('wind-direction-value').textContent = `${scenario.direction}°`;
+                
+                document.getElementById('turbulence-slider').value = scenario.turbulence * 100;
+                document.getElementById('turbulence-value').textContent = `${(scenario.turbulence * 100).toFixed(0)}%`;
+                
+                updatePINNVisualization();
+                console.log(`Loaded scenario: ${scenarioName}`);
+            }
+        };
+
+        // Panel toggling
+        window.togglePanel = function(panelId) {
+            const panel = document.getElementById(panelId);
+            const button = panel.querySelector('.panel-toggle');
+            
+            if (panel.classList.contains('minimized')) {
+                panel.classList.remove('minimized');
+                button.textContent = '−';
+            } else {
+                panel.classList.add('minimized');
+                button.textContent = '+';
+            }
+        };
+
+        function updateInteractivePhysics() {
+            const dt = 0.016;
+            
+            if (!emergencyStop && animationRunning) {
+                // Apply wind conditions
+                const windVariation = params.turbulenceIntensity * (Math.random() - 0.5) * 10;
+                const currentWind = params.windSpeed + windVariation;
+                
+                // Calculate target RPM
+                const targetRPM = calculateTargetRPM(currentWind);
+                const rpmDiff = targetRPM - bladeRPM;
+                bladeRPM += rpmDiff * dt * 2;
+                
+                // Apply blade pitch effect
+                const pitchEffect = Math.cos(params.bladePitch * Math.PI / 180);
+                bladeRPM *= pitchEffect;
+                
+                // Nacelle yaw control
+                const yawDiff = (params.nacelleYawTarget - nacelleYaw) * Math.PI / 180;
+                nacelleYaw += yawDiff * dt * 0.5;
+                
+                // Calculate power output
+                powerOutput = calculatePowerOutput(currentWind) * (params.generatorLoad / 100);
+                
+                // Calculate tip speed ratio
+                tipSpeedRatio = bladeRPM > 0 ? (bladeRPM * 2 * Math.PI / 60 * WINDMILL_PARAMS.bladeLength) / Math.max(currentWind, 0.1) : 0;
+            } else if (emergencyStop) {
+                bladeRPM *= 0.9; // Emergency braking
+                powerOutput = 0;
+            }
+            
+            return {
+                windSpeed: params.windSpeed,
+                bladeRPM: Math.max(0, bladeRPM),
+                powerOutput,
+                efficiency: calculateEfficiency(params.windSpeed, bladeRPM),
+                tipSpeedRatio,
+                turbulenceLevel: params.turbulenceIntensity > 0.3 ? 'High' : params.turbulenceIntensity > 0.15 ? 'Medium' : 'Low',
+                nacelleYaw: nacelleYaw * 180 / Math.PI
+            };
+        }
+
+        function calculateTargetRPM(windSpeed) {
+            if (windSpeed < WINDMILL_PARAMS.cutInSpeed) return 0;
+            if (windSpeed > WINDMILL_PARAMS.cutOutSpeed) return 0;
+            
+            const optimalTSR = 7.5;
+            const targetRPM = (optimalTSR * windSpeed * 60) / (2 * Math.PI * WINDMILL_PARAMS.bladeLength);
+            return Math.min(targetRPM, WINDMILL_PARAMS.maxRPM);
+        }
+
+        function calculatePowerOutput(windSpeed) {
+            if (windSpeed < WINDMILL_PARAMS.cutInSpeed || windSpeed > WINDMILL_PARAMS.cutOutSpeed) {
+                return 0;
+            }
+            
+            // Simplified power curve
+            if (windSpeed <= WINDMILL_PARAMS.ratedSpeed) {
+                return WINDMILL_PARAMS.ratedPower * Math.pow(windSpeed / WINDMILL_PARAMS.ratedSpeed, 3);
+            } else {
+                return WINDMILL_PARAMS.ratedPower;
+            }
+        }
+
+        function calculateEfficiency(windSpeed, rpm) {
+            if (windSpeed < WINDMILL_PARAMS.cutInSpeed) return 0;
+            
+            const availablePower = 0.5 * 1.225 * Math.PI * Math.pow(WINDMILL_PARAMS.bladeLength, 2) * Math.pow(windSpeed, 3) / 1000;
+            return availablePower > 0 ? Math.min((powerOutput / availablePower) * 100, 95) : 0;
+        }
+
+        function updatePINNVisualization() {
+            // Animate neural network nodes based on parameter changes
+            const neurons = document.querySelectorAll('.neuron');
+            neurons.forEach((neuron, index) => {
+                neuron.classList.remove('active');
+                
+                // Activate neurons based on parameter values
+                if (params.windSpeed > 10 && index % 3 === 0) {
+                    neuron.classList.add('active');
+                }
+                if (params.turbulenceIntensity > 0.2 && index % 4 === 0) {
+                    neuron.classList.add('active');
+                }
+            });
+            
+            // Update PINN prediction based on current parameters
+            if (pinnModel) {
+                updatePINNPrediction();
+            }
+        }
+
+        function updatePINNPrediction() {
+            if (pinnModel) {
+                try {
+                    const input = tf.tensor2d([[0, 26/50, 0, Date.now()/10000 % 1, params.windSpeed/20]]);
+                    const prediction = pinnModel.predict(input);
+                    const data = prediction.dataSync();
+                    
+                    const flowQuality = Math.abs(data[0]) + Math.abs(data[1]) + Math.abs(data[2]);
+                    let status = '🟢 Optimal Flow';
+                    
+                    if (flowQuality > 0.5) status = '🔴 Turbulent Flow';
+                    else if (flowQuality > 0.3) status = '🟡 Moderate Flow';
+                    
+                    document.getElementById('pinn-prediction').textContent = status;
+                    
+                    // Update training loss display
+                    if (trainingHistory.loss) {
+                        const lastLoss = trainingHistory.loss[trainingHistory.loss.length - 1];
+                        document.getElementById('training-loss').textContent = lastLoss.toFixed(4);
+                    }
+                    
+                    input.dispose();
+                    prediction.dispose();
+                } catch (error) {
+                    document.getElementById('pinn-prediction').textContent = 'Computing...';
+                }
+            }
+        }
+
+        function updateAdvancedParticles(metrics) {
+            if (!windParticles || !animationRunning) return;
+            
+            const positions = windParticles.geometry.attributes.position.array;
+            const velocities = windParticles.geometry.attributes.velocity.array;
+            const colors = windParticles.geometry.attributes.color.array;
+            
+            for (let i = 0; i < positions.length; i += 3) {
+                const x = positions[i];
+                const y = positions[i + 1];
+                const z = positions[i + 2];
+                
+                const distance = Math.sqrt(x*x + (y-26)*(y-26) + z*z);
+                const wakeEffect = distance < 30 ? Math.exp(-distance/10) : 0;
+                
+                // Update velocities with interactive parameters
+                const windX = Math.cos(params.windDirection * Math.PI / 180);
+                const windZ = Math.sin(params.windDirection * Math.PI / 180);
+                
+                velocities[i] = params.windSpeed * windX * (1 - wakeEffect * 0.5) + (Math.random() - 0.5) * params.turbulenceIntensity * 5;
+                velocities[i + 1] += (Math.random() - 0.5) * params.turbulenceIntensity * 2;
+                velocities[i + 2] = params.windSpeed * windZ * (1 - wakeEffect * 0.5) + (Math.random() - 0.5) * params.turbulenceIntensity * 3;
+                
+                positions[i] += velocities[i] * 0.1;
+                positions[i + 1] += velocities[i + 1] * 0.1;
+                positions[i + 2] += velocities[i + 2] * 0.1;
+                
+                // Reset particles
+                if (positions[i] > 100) positions[i] = -100;
+                if (positions[i + 1] > 60) positions[i + 1] = 0;
+                if (positions[i + 2] > 100) positions[i + 2] = -100;
+                if (positions[i] < -100) positions[i] = 100;
+                if (positions[i + 2] < -100) positions[i + 2] = 100;
+                
+                // Update colors based on speed
+                const speed = Math.sqrt(velocities[i]**2 + velocities[i+1]**2 + velocities[i+2]**2);
+                colors[i] = Math.min(speed / 15, 1);
+                colors[i + 1] = 0.8;
+                colors[i + 2] = 1 - Math.min(speed / 15, 1);
+            }
+            
+            windParticles.geometry.attributes.position.needsUpdate = true;
+            windParticles.geometry.attributes.color.needsUpdate = true;
+        }
+
+        function updateUI(metrics) {
+            // Update performance metrics
+            document.getElementById('power-output').textContent = `${metrics.powerOutput.toFixed(0)} kW`;
+            document.getElementById('wind-speed').textContent = `${metrics.windSpeed.toFixed(1)} m/s`;
+            document.getElementById('blade-rpm').textContent = metrics.bladeRPM.toFixed(1);
+            document.getElementById('efficiency').textContent = `${metrics.efficiency.toFixed(1)}%`;
+            document.getElementById('tip-speed-ratio').textContent = metrics.tipSpeedRatio.toFixed(2);
+            document.getElementById('turbulence').textContent = metrics.turbulenceLevel;
+            document.getElementById('nacelle-yaw').textContent = `${metrics.nacelleYaw.toFixed(0)}°`;
+            
+            // Update progress bars
+            document.getElementById('power-bar').style.width = `${Math.min(metrics.powerOutput / WINDMILL_PARAMS.ratedPower * 100, 100)}%`;
+            document.getElementById('wind-bar').style.width = `${Math.min(metrics.windSpeed / 25 * 100, 100)}%`;
+            document.getElementById('rpm-bar').style.width = `${Math.min(metrics.bladeRPM / WINDMILL_PARAMS.maxRPM * 100, 100)}%`;
+            document.getElementById('efficiency-bar').style.width = `${metrics.efficiency}%`;
+        }
+
+        function animate() {
+            const metrics = updateInteractivePhysics();
+            
+            if (animationRunning && windmill.blades) {
+                // Blade rotation
+                windmill.blades.rotation.z += (metrics.bladeRPM * 2 * Math.PI / 60) * 0.016;
+                
+                // Nacelle yaw
+                windmill.nacelle.rotation.y = nacelleYaw;
+                windmill.hub.rotation.y = nacelleYaw;
+                windmill.blades.rotation.y = nacelleYaw;
+                
+                // Individual blade pitch
+                windmill.individualBlades.forEach((blade) => {
+                    blade.rotation.x = params.bladePitch * Math.PI / 180;
+                });
+            }
+            
+            updatePINNPrediction();
+            updateAdvancedParticles(metrics);
+            updateUI(metrics);
+            
+            if (controls) {
+                controls.update();
+            }
+            
+            renderer.render(scene, camera);
+            renderer.setAnimationLoop(animate);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Start the interactive application
+        console.log('🚀 Starting Interactive PINN Windmill Digital Twin...');
+        init();
+
+    </script>
+</body>
+</html>

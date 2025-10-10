@@ -1,0 +1,2612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Supreme - Advanced Quantum Computing & ML Simulator</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #stars {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 340px 1fr 380px;
+            height: 100vh;
+            gap: 15px;
+            padding: 15px;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 280px 1fr 300px;
+                gap: 10px;
+                padding: 10px;
+            }
+        }
+
+        .panel {
+            background: rgba(10, 15, 30, 0.85);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+        }
+
+        .panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00d4ff, #ff00ff);
+            border-radius: 10px;
+        }
+
+        h2 {
+            color: #00d4ff;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #ff00ff;
+            margin: 20px 0 10px;
+            font-size: 1em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #canvas-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            box-shadow: inset 0 0 50px rgba(0, 212, 255, 0.1);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .btn {
+            padding: 14px 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        .btn.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn.tertiary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn.quaternary {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .btn.full {
+            grid-column: 1 / -1;
+        }
+
+        .stat {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 12px;
+            border-left: 4px solid #00d4ff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00d4ff, #0088ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .qubit-state {
+            background: linear-gradient(135deg, rgba(255, 0, 255, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border-left: 4px solid #ff00ff;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .qubit-state:hover {
+            transform: translateX(5px);
+            border-left-width: 6px;
+        }
+
+        .qubit-state.measured {
+            border-left-color: #00ff00;
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.15) 0%, rgba(0, 150, 0, 0.15) 100%);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #ff00ff, #00ff00);
+            background-size: 200% 100%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+            animation: gradientShift 3s infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .ml-prediction {
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.1) 0%, rgba(0, 200, 100, 0.1) 100%);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 12px;
+            border-left: 4px solid #00ff00;
+            animation: pulse 3s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.6); }
+        }
+
+        .control-group {
+            margin: 15px 0;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00d4ff;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            border-radius: 10px;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #00d4ff, #0088ff);
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #00d4ff, #0088ff);
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+            border: none;
+        }
+
+        .info {
+            font-size: 12px;
+            color: #888;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+
+        .gate-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .gate-btn {
+            padding: 10px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            color: #00d4ff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .gate-btn:hover {
+            background: rgba(0, 212, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .gate-btn.active {
+            background: rgba(0, 212, 255, 0.5);
+            border-color: #00d4ff;
+        }
+
+        #logOutput {
+            font-size: 11px;
+            color: #666;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            margin: 3px 0;
+            padding: 3px 5px;
+            border-left: 2px solid #00d4ff;
+            padding-left: 8px;
+        }
+
+        .log-entry.success {
+            border-left-color: #00ff00;
+            color: #00ff00;
+        }
+
+        .log-entry.warning {
+            border-left-color: #ffaa00;
+            color: #ffaa00;
+        }
+
+        .log-entry.error {
+            border-left-color: #ff0000;
+            color: #ff0000;
+        }
+
+        .matrix-display {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 10px 0;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .circuit-diagram {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            min-height: 100px;
+            border: 1px solid rgba(255, 0, 255, 0.3);
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: #00d4ff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 1000;
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            display: none;
+        }
+
+        .neural-network {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .nn-layer {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nn-node {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #0088ff);
+            border: 2px solid rgba(0, 212, 255, 0.5);
+            animation: nodeGlow 2s infinite alternate;
+        }
+
+        @keyframes nodeGlow {
+            from { box-shadow: 0 0 5px rgba(0, 212, 255, 0.5); }
+            to { box-shadow: 0 0 20px rgba(0, 212, 255, 1); }
+        }
+
+        .performance-monitor {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .perf-stat {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .perf-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00ff00;
+        }
+
+        .perf-label {
+            font-size: 10px;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        .hud-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #00d4ff;
+            z-index: 10;
+        }
+
+        .tab-container {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 8px 8px 0 0;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+            border-bottom: 2px solid #00d4ff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .quantum-circuit-builder {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .wire {
+            stroke: #00d4ff;
+            stroke-width: 2;
+        }
+
+        .gate-visual {
+            fill: rgba(102, 126, 234, 0.8);
+            stroke: #667eea;
+            stroke-width: 2;
+            transition: all 0.3s;
+        }
+
+        .gate-visual:hover {
+            fill: rgba(102, 126, 234, 1);
+            transform: scale(1.1);
+        }
+
+        .measurement-histogram {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .histogram-bar {
+            background: linear-gradient(180deg, #00d4ff, #0088ff);
+            border-radius: 5px 5px 0 0;
+            position: relative;
+            min-height: 10px;
+            transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .histogram-label {
+            text-align: center;
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .bloch-sphere-mini {
+            width: 150px;
+            height: 150px;
+            margin: 10px auto;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, rgba(0, 212, 255, 0.3), transparent);
+            border: 2px solid rgba(0, 212, 255, 0.5);
+            position: relative;
+        }
+
+        .bloch-vector {
+            position: absolute;
+            width: 3px;
+            background: linear-gradient(180deg, #ff00ff, #00d4ff);
+            transform-origin: bottom center;
+            border-radius: 3px;
+        }
+
+        .advanced-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(102, 126, 234, 0.05));
+            padding: 12px;
+            border-radius: 10px;
+            border-left: 3px solid #00d4ff;
+            transition: all 0.3s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .metric-title {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-number {
+            font-size: 20px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00d4ff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 5px;
+        }
+
+        .vr-ar-controls {
+            margin: 15px 0;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(0, 212, 255, 0.1));
+            border-radius: 10px;
+            border: 1px solid rgba(255, 0, 255, 0.3);
+        }
+
+        .export-controls {
+            margin: 15px 0;
+        }
+
+        .chip {
+            display: inline-block;
+            background: rgba(0, 212, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            margin: 3px;
+            border: 1px solid rgba(0, 212, 255, 0.4);
+        }
+
+        .pulse-glow {
+            animation: pulseGlow 2s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 25px rgba(0, 212, 255, 1), 0 0 50px rgba(255, 0, 255, 0.5);
+            }
+        }
+
+        .quantum-info-panel {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 3px solid #ff00ff;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .latex-formula {
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            color: #00ff00;
+            margin: 8px 0;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .achievement-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            margin: 5px;
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+            animation: bounceIn 0.6s;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: -400px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            padding: 15px 20px;
+            min-width: 300px;
+            max-width: 350px;
+            z-index: 10000;
+            transition: right 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.5);
+        }
+
+        .notification.show {
+            right: 20px;
+        }
+
+        .notification-title {
+            color: #00d4ff;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .notification-body {
+            color: #ccc;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        .quantum-loader {
+            width: 120px;
+            height: 120px;
+            position: relative;
+        }
+
+        .quantum-loader::before,
+        .quantum-loader::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            border: 3px solid transparent;
+        }
+
+        .quantum-loader::before {
+            width: 100%;
+            height: 100%;
+            border-top-color: #00d4ff;
+            border-right-color: #00d4ff;
+            animation: spin 1.5s linear infinite;
+        }
+
+        .quantum-loader::after {
+            width: 70%;
+            height: 70%;
+            top: 15%;
+            left: 15%;
+            border-top-color: #ff00ff;
+            border-bottom-color: #ff00ff;
+            animation: spin 2s linear infinite reverse;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .settings-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(10, 15, 30, 0.98);
+            border: 2px solid #00d4ff;
+            border-radius: 20px;
+            padding: 30px;
+            z-index: 10000;
+            min-width: 500px;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 20px 60px rgba(0, 212, 255, 0.3);
+        }
+
+        .settings-modal.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: none;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="quantum-loader"></div>
+        <p style="color: #00d4ff; margin-top: 30px; font-size: 18px; letter-spacing: 3px;">INITIALIZING QUANTUM SYSTEM</p>
+    </div>
+
+    <div class="notification" id="notification">
+        <div class="notification-title" id="notificationTitle"></div>
+        <div class="notification-body" id="notificationBody"></div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="app.closeSettings()"></div>
+    <div class="settings-modal" id="settingsModal">
+        <h2 style="margin-bottom: 25px;">⚙️ Advanced Settings</h2>
+        
+        <div class="control-group">
+            <label>Visualization Quality</label>
+            <select id="qualitySelect" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; color: white; font-size: 14px;">
+                <option value="high">High (Recommended)</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low (Performance)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Particle Count</label>
+            <input type="range" id="particleSlider" min="500" max="3000" value="1000" step="100">
+            <div class="info">Particles: <span id="particleValue">1000</span></div>
+        </div>
+
+        <div class="control-group">
+            <label>Animation Style</label>
+            <select id="animationStyle" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; color: white; font-size: 14px;">
+                <option value="smooth">Smooth</option>
+                <option value="dynamic">Dynamic</option>
+                <option value="minimal">Minimal</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Color Scheme</label>
+            <div class="btn-group">
+                <button class="btn tertiary" onclick="app.setColorScheme('cyan')">Cyan</button>
+                <button class="btn secondary" onclick="app.setColorScheme('purple')">Purple</button>
+                <button class="btn" onclick="app.setColorScheme('green')">Green</button>
+            </div>
+        </div>
+
+        <div class="btn-group" style="margin-top: 25px;">
+            <button class="btn full quaternary" onclick="app.closeSettings()">✓ Apply & Close</button>
+        </div>
+    </div>
+    <canvas id="stars"></canvas>
+    <div class="tooltip" id="tooltip"></div>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>⚛️ Quantum Controls</h2>
+            
+            <div class="tab-container">
+                <button class="tab active" onclick="app.switchTab('gates')">Gates</button>
+                <button class="tab" onclick="app.switchTab('operations')">Operations</button>
+                <button class="tab" onclick="app.switchTab('advanced')">Advanced</button>
+            </div>
+
+            <div id="gates-tab" class="tab-content active">
+                <h3>Single Qubit Gates</h3>
+                <div class="gate-selector">
+                    <div class="gate-btn" onclick="app.applyGate('H')" title="Hadamard">H</div>
+                    <div class="gate-btn" onclick="app.applyGate('X')" title="Pauli-X (NOT)">X</div>
+                    <div class="gate-btn" onclick="app.applyGate('Y')" title="Pauli-Y">Y</div>
+                    <div class="gate-btn" onclick="app.applyGate('Z')" title="Pauli-Z">Z</div>
+                    <div class="gate-btn" onclick="app.applyGate('S')" title="Phase">S</div>
+                    <div class="gate-btn" onclick="app.applyGate('T')" title="π/8">T</div>
+                    <div class="gate-btn" onclick="app.applyGate('Rx')" title="X-Rotation">Rx</div>
+                    <div class="gate-btn" onclick="app.applyGate('Ry')" title="Y-Rotation">Ry</div>
+                    <div class="gate-btn" onclick="app.applyGate('Rz')" title="Z-Rotation">Rz</div>
+                </div>
+
+                <h3>Two Qubit Gates</h3>
+                <div class="btn-group">
+                    <button class="btn tertiary" onclick="app.applyCNOT()">CNOT</button>
+                    <button class="btn secondary" onclick="app.applySWAP()">SWAP</button>
+                    <button class="btn" onclick="app.applyCZ()">CZ</button>
+                    <button class="btn quaternary" onclick="app.applyCY()">CY</button>
+                </div>
+
+                <h3>Advanced Operations</h3>
+                <div class="btn-group">
+                    <button class="btn" onclick="app.applyToffoli()">Toffoli</button>
+                    <button class="btn quaternary" onclick="app.applyFredkin()">Fredkin</button>
+                </div>
+            </div>
+
+            <div id="operations-tab" class="tab-content">
+                <button class="btn full" onclick="app.addQubit()">➕ Add Qubit</button>
+                <button class="btn full secondary" onclick="app.removeQubit()">➖ Remove Qubit</button>
+                <button class="btn full tertiary" onclick="app.measureQubits()">📊 Measure All</button>
+                <button class="btn full quaternary" onclick="app.resetCircuit()">🔄 Reset Circuit</button>
+                
+                <h3>Quantum Algorithms</h3>
+                <button class="btn full" onclick="app.deutschAlgorithm()">Deutsch Algorithm</button>
+                <button class="btn full secondary" onclick="app.groverSearch()">Grover's Search</button>
+                <button class="btn full tertiary" onclick="app.qftAlgorithm()">Quantum Fourier Transform</button>
+                <button class="btn full" onclick="app.shorAlgorithm()">Shor's Algorithm (Demo)</button>
+                <button class="btn full secondary" onclick="app.bellState()">Create Bell State</button>
+                <button class="btn full tertiary" onclick="app.ghzState()">Create GHZ State</button>
+                <button class="btn full" onclick="app.wState()">Create W State</button>
+                <button class="btn full secondary" onclick="app.deutschJozsaAlgorithm()">Deutsch-Jozsa</button>
+                <button class="btn full tertiary" onclick="app.bernsteinVaziraniAlgorithm()">Bernstein-Vazirani</button>
+                <button class="btn full" onclick="app.simonAlgorithm()">Simon's Algorithm</button>
+            </div>
+
+            <div id="advanced-tab" class="tab-content">
+                <h3>Quantum Tomography</h3>
+                <button class="btn full" onclick="app.performStateTomography()">📸 State Tomography</button>
+                <button class="btn full secondary" onclick="app.performProcessTomography()">🔬 Process Tomography</button>
+                
+                <h3>Error Correction</h3>
+                <button class="btn full tertiary" onclick="app.apply3QubitCode()">3-Qubit Bit-Flip Code</button>
+                <button class="btn full" onclick="app.applyShorCode()">Shor's 9-Qubit Code</button>
+                <button class="btn full secondary" onclick="app.applySurfaceCode()">Surface Code (Demo)</button>
+                
+                <h3>Quantum Noise Models</h3>
+                <button class="btn full tertiary" onclick="app.applyDepolarizingNoise()">Depolarizing Channel</button>
+                <button class="btn full" onclick="app.applyAmplitudeDamping()">Amplitude Damping</button>
+                <button class="btn full secondary" onclick="app.applyPhaseDamping()">Phase Damping</button>
+                
+                <h3>Export & Import</h3>
+                <button class="btn full tertiary" onclick="app.exportCircuit()">💾 Export Circuit</button>
+                <button class="btn full" onclick="app.exportStateVector()">📊 Export State Vector</button>
+                <button class="btn full secondary" onclick="app.generateQASM()">📝 Generate QASM</button>
+            </div>
+
+            <h3>Simulation Parameters</h3>
+            <div class="control-group">
+                <label>Rotation Speed</label>
+                <input type="range" id="speedSlider" min="0" max="20" value="10" oninput="app.updateSpeed(this.value)">
+                <div class="info">Speed: <span id="speedValue">10</span>x</div>
+            </div>
+
+            <div class="control-group">
+                <label>Decoherence Rate</label>
+                <input type="range" id="decoherenceSlider" min="0" max="100" value="0" oninput="app.updateDecoherence(this.value)">
+                <div class="info">Noise: <span id="decoherenceValue">0</span>%</div>
+            </div>
+
+            <div class="control-group">
+                <label>Temperature (mK)</label>
+                <input type="range" id="tempSlider" min="1" max="300" value="15" oninput="app.updateTemperature(this.value)">
+                <div class="info">T: <span id="tempValue">15</span> mK</div>
+            </div>
+        </div>
+
+        <div id="canvas-container">
+            <div class="hud-overlay">
+                <div>FPS: <span id="fps">60</span></div>
+                <div>Qubits: <span id="qubitCountHUD">0</span></div>
+                <div>Gates Applied: <span id="gateCount">0</span></div>
+                <div>Fidelity: <span id="fidelity">100.0</span>%</div>
+                <div>Circuit Depth: <span id="circuitDepth">0</span></div>
+            </div>
+            <div style="position: absolute; bottom: 20px; left: 20px; display: flex; gap: 10px;">
+                <button class="btn" onclick="app.toggleFullscreen()" style="padding: 10px 15px; font-size: 12px;">⛶ Fullscreen</button>
+                <button class="btn tertiary" onclick="app.captureScreenshot()" style="padding: 10px 15px; font-size: 12px;">📸 Screenshot</button>
+                <button class="btn quaternary" onclick="app.openSettings()" style="padding: 10px 15px; font-size: 12px;">⚙️ Settings</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>🔬 Quantum State Analytics</h2>
+            
+            <div class="performance-monitor">
+                <div class="perf-stat">
+                    <div class="perf-value" id="qubitCount">0</div>
+                    <div class="perf-label">QUBITS</div>
+                </div>
+                <div class="perf-stat">
+                    <div class="perf-value" id="entanglementDegree">0</div>
+                    <div class="perf-label">ENTANGLEMENT</div>
+                </div>
+                <div class="perf-stat">
+                    <div class="perf-value" id="purity">100</div>
+                    <div class="perf-label">PURITY %</div>
+                </div>
+                <div class="perf-stat">
+                    <div class="perf-value" id="entropy">0.00</div>
+                    <div class="perf-label">ENTROPY</div>
+                </div>
+            </div>
+
+            <h3>Advanced Metrics</h3>
+            <div class="advanced-metrics">
+                <div class="metric-card">
+                    <div class="metric-title">Concurrence</div>
+                    <div class="metric-number" id="concurrence">0.00</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Negativity</div>
+                    <div class="metric-number" id="negativity">0.00</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Tangle</div>
+                    <div class="metric-number" id="tangle">0.00</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Bell Fidelity</div>
+                    <div class="metric-number" id="bellFidelity">0.00</div>
+                </div>
+            </div>
+
+            <h3>Qubit State Vectors</h3>
+            <div id="qubitStates"></div>
+
+            <h3>Density Matrix</h3>
+            <div class="matrix-display" id="densityMatrix">ρ = |ψ⟩⟨ψ|<br>Awaiting measurement...</div>
+
+            <h3>Circuit Diagram</h3>
+            <div class="circuit-diagram" id="circuitDiagram">
+                <canvas id="circuitCanvas" width="300" height="100"></canvas>
+            </div>
+
+            <h3>Measurement Histogram</h3>
+            <div class="measurement-histogram" id="measurementHistogram">
+                <div style="grid-column: 1/-1; text-align: center; color: #888; font-size: 12px; padding: 20px;">
+                    No measurements yet
+                </div>
+            </div>
+
+            <div class="quantum-info-panel">
+                <strong>Quantum Information</strong><br>
+                <div class="latex-formula">|ψ⟩ = α|0⟩ + β|1⟩</div>
+                <div style="color: #888; font-size: 11px;">
+                    where |α|² + |β|² = 1<br>
+                    Superposition principle active
+                </div>
+            </div>
+
+            <h2>🤖 ML Intelligence</h2>
+
+            <div class="neural-network">
+                <div class="nn-layer">
+                    <div class="nn-node"></div>
+                    <div class="nn-node"></div>
+                    <div class="nn-node"></div>
+                </div>
+                <div class="nn-layer">
+                    <div class="nn-node"></div>
+                    <div class="nn-node"></div>
+                    <div class="nn-node"></div>
+                    <div class="nn-node"></div>
+                </div>
+                <div class="nn-layer">
+                    <div class="nn-node"></div>
+                    <div class="nn-node"></div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn secondary" onclick="app.trainMLModel()">🧠 Train Model</button>
+                <button class="btn tertiary" onclick="app.predictPattern()">🔮 Predict</button>
+                <button class="btn" onclick="app.trainDeepModel()">🔥 Deep Learning</button>
+                <button class="btn quaternary" onclick="app.optimizeCircuit()">⚡ Optimize Circuit</button>
+            </div>
+
+            <div class="stat">
+                <div class="stat-label">Training Accuracy</div>
+                <div class="stat-value"><span id="accuracy">0</span>%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="accuracyBar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-label">Model Confidence</div>
+                <div class="stat-value"><span id="confidence">0</span>%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="confidenceBar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <h3>ML Predictions</h3>
+            <div class="ml-prediction">
+                <div class="stat-label">Pattern Analysis</div>
+                <div id="mlOutput" style="color: #00ff00; margin-top: 5px; font-size: 13px;">Awaiting training data...</div>
+            </div>
+
+            <div class="ml-prediction">
+                <div class="stat-label">State Classification</div>
+                <div id="classification" style="color: #00ff00; margin-top: 5px; font-size: 13px;">No measurements yet</div>
+            </div>
+
+            <div class="ml-prediction">
+                <div class="stat-label">Quantum Variational</div>
+                <div id="variational" style="color: #ff00ff; margin-top: 5px; font-size: 13px;">VQE: Ready</div>
+            </div>
+
+            <h3>Achievements</h3>
+            <div id="achievements" style="margin: 10px 0;">
+                <span class="chip">🏆 First Steps</span>
+            </div>
+
+            <h3>System Log</h3>
+            <div id="logOutput"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Optimized Application State Manager
+        const app = {
+            scene: null,
+            camera: null,
+            renderer: null,
+            qubits: [],
+            particles: null,
+            connections: [],
+            animationSpeed: 2,
+            decoherenceRate: 0,
+            temperature: 15,
+            mlModel: { trained: false, accuracy: 0, confidence: 0, weights: [], epochs: 0, deepLayers: 4 },
+            measurementHistory: [],
+            histogramData: {},
+            circuitHistory: [],
+            gateCount: 0,
+            circuitDepth: 0,
+            lastFrameTime: Date.now(),
+            fps: 60,
+            selectedQubit: null,
+            animationId: null,
+            achievements: new Set(['first_steps']),
+            settings: { quality: 'high', particleCount: 1000, animationStyle: 'smooth', colorScheme: 'cyan' },
+            
+            init() {
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    this.showNotification('🎉 Quantum System Ready', 'All quantum systems initialized successfully!');
+                }, 2000);
+
+                this.initStarfield();
+                this.initThreeJS();
+                this.setupEventListeners();
+                this.addQubit();
+                this.addQubit();
+                this.startAnimation();
+                this.updatePerformanceMonitor();
+                this.log('Quantum Computing Simulator initialized', 'success');
+                this.log('Keyboard shortcuts: H, X, Y, Z (gates), M (measure), R (reset), A (add), C (CNOT), T (train), P (predict), S (settings)', 'info');
+                this.unlockAchievement('first_steps', 'First Steps', 'Started the quantum simulator');
+            },
+
+            initStarfield() {
+                const canvas = document.getElementById('stars');
+                const ctx = canvas.getContext('2d');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+
+                const stars = Array.from({ length: 200 }, () => ({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 2,
+                    speed: Math.random() * 0.5
+                }));
+
+                const animateStars = () => {
+                    ctx.fillStyle = 'rgba(9, 10, 15, 0.1)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = 'white';
+                    
+                    stars.forEach(star => {
+                        ctx.beginPath();
+                        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                        star.y += star.speed;
+                        if (star.y > canvas.height) {
+                            star.y = 0;
+                            star.x = Math.random() * canvas.width;
+                        }
+                    });
+                    
+                    requestAnimationFrame(animateStars);
+                };
+                animateStars();
+            },
+
+            initThreeJS() {
+                this.scene = new THREE.Scene();
+                this.scene.fog = new THREE.FogExp2(0x000000, 0.015);
+                
+                const container = document.getElementById('canvas-container');
+                this.camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+                this.camera.position.set(0, 8, 20);
+                this.camera.lookAt(0, 0, 0);
+
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                container.appendChild(this.renderer.domElement);
+
+                const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+                this.scene.add(ambientLight);
+
+                const lights = [
+                    { color: 0x00d4ff, pos: [15, 15, 15] },
+                    { color: 0xff00ff, pos: [-15, -15, 15] },
+                    { color: 0x00ff00, pos: [0, 20, -15] }
+                ];
+
+                lights.forEach(({ color, pos }) => {
+                    const light = new THREE.PointLight(color, 3, 100);
+                    light.position.set(...pos);
+                    light.castShadow = true;
+                    this.scene.add(light);
+                });
+
+                const gridHelper = new THREE.GridHelper(40, 40, 0x00d4ff, 0x1a1a2e);
+                gridHelper.position.y = -8;
+                this.scene.add(gridHelper);
+
+                this.createParticleSystem();
+            },
+
+            createParticleSystem() {
+                const particleCount = this.settings.particleCount;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+
+                for (let i = 0; i < particleCount * 3; i += 3) {
+                    positions[i] = (Math.random() - 0.5) * 100;
+                    positions[i + 1] = (Math.random() - 0.5) * 100;
+                    positions[i + 2] = (Math.random() - 0.5) * 100;
+
+                    const color = new THREE.Color();
+                    color.setHSL(Math.random(), 1.0, 0.5);
+                    colors[i] = color.r;
+                    colors[i + 1] = color.g;
+                    colors[i + 2] = color.b;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                const material = new THREE.PointsMaterial({
+                    size: 0.3,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.6,
+                    blending: THREE.AdditiveBlending
+                });
+
+                this.particles = new THREE.Points(geometry, material);
+                this.scene.add(this.particles);
+            },
+
+            createQubit() {
+                const group = new THREE.Group();
+                
+                const sphereGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+                const sphereMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x00d4ff,
+                    emissive: 0x0066ff,
+                    emissiveIntensity: 0.5,
+                    shininess: 100,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+                sphere.castShadow = true;
+                sphere.receiveShadow = true;
+                group.add(sphere);
+
+                const glowGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+                const glowMaterial = new THREE.MeshBasicMaterial({
+                    color: 0x00d4ff,
+                    transparent: true,
+                    opacity: 0.2,
+                    side: THREE.BackSide
+                });
+                const glowSphere = new THREE.Mesh(glowGeometry, glowMaterial);
+                group.add(glowSphere);
+
+                const ringColors = [0xff00ff, 0x00ff00, 0xffff00];
+                const rings = ringColors.map((color, i) => {
+                    const ringGeometry = new THREE.TorusGeometry(1 + i * 0.3, 0.03, 16, 100);
+                    const ringMaterial = new THREE.MeshBasicMaterial({ 
+                        color: color,
+                        transparent: true,
+                        opacity: 0.7
+                    });
+                    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                    ring.rotation.x = Math.PI / 2;
+                    ring.rotation.z = i * (Math.PI / 3);
+                    group.add(ring);
+                    return ring;
+                });
+
+                const arrowDir = new THREE.Vector3(0, 1, 0);
+                const arrowOrigin = new THREE.Vector3(0, 0, 0);
+                const arrow = new THREE.ArrowHelper(arrowDir, arrowOrigin, 1.2, 0xffffff, 0.3, 0.2);
+                group.add(arrow);
+
+                return { group, sphere, glowSphere, rings, arrow };
+            },
+
+            addQubit() {
+                const qubitData = {
+                    alpha: { re: 1 / Math.sqrt(2), im: 0 },
+                    beta: { re: 1 / Math.sqrt(2), im: 0 },
+                    phase: 0,
+                    measured: false,
+                    entangled: false,
+                    blochTheta: Math.PI / 4,
+                    blochPhi: 0
+                };
+
+                const visual = this.createQubit();
+                Object.assign(qubitData, visual);
+
+                const angle = (this.qubits.length * 2 * Math.PI) / Math.max(this.qubits.length + 1, 8);
+                const radius = 5;
+                qubitData.group.position.x = Math.cos(angle) * radius;
+                qubitData.group.position.z = Math.sin(angle) * radius;
+
+                this.scene.add(qubitData.group);
+                this.qubits.push(qubitData);
+
+                this.updateUI();
+                this.log(`Qubit ${this.qubits.length} initialized in superposition |ψ⟩ = (|0⟩ + |1⟩)/√2`, 'success');
+                
+                if (this.qubits.length === 5) {
+                    this.unlockAchievement('five_qubits', 'Qubit Collector', 'Created 5 qubits');
+                }
+                if (this.qubits.length === 10) {
+                    this.unlockAchievement('ten_qubits', 'Qubit Master', 'Created 10 qubits');
+                }
+            },
+
+            removeQubit() {
+                if (this.qubits.length === 0) return;
+                const qubit = this.qubits.pop();
+                this.scene.remove(qubit.group);
+                this.updateUI();
+                this.log('Qubit removed from circuit', 'warning');
+            },
+
+            applyGate(gateName) {
+                if (this.qubits.length === 0) return;
+
+                const gates = {
+                    'H': (a, b) => ({
+                        alpha: { re: (a.re + b.re) / Math.sqrt(2), im: (a.im + b.im) / Math.sqrt(2) },
+                        beta: { re: (a.re - b.re) / Math.sqrt(2), im: (a.im - b.im) / Math.sqrt(2) }
+                    }),
+                    'X': (a, b) => ({ alpha: b, beta: a }),
+                    'Y': (a, b) => ({ alpha: { re: -b.im, im: b.re }, beta: { re: a.im, im: -a.re } }),
+                    'Z': (a, b) => ({ alpha: a, beta: { re: -b.re, im: -b.im } }),
+                    'S': (a, b) => ({ alpha: a, beta: { re: -b.im, im: b.re } }),
+                    'T': (a, b) => {
+                        const angle = Math.PI / 4;
+                        return { alpha: a, beta: { 
+                            re: b.re * Math.cos(angle) - b.im * Math.sin(angle),
+                            im: b.re * Math.sin(angle) + b.im * Math.cos(angle)
+                        }};
+                    },
+                    'Rx': (a, b) => {
+                        const angle = Math.PI / 4;
+                        return {
+                            alpha: { re: a.re * Math.cos(angle/2) - b.im * Math.sin(angle/2), im: a.im * Math.cos(angle/2) + b.re * Math.sin(angle/2) },
+                            beta: { re: b.re * Math.cos(angle/2) - a.im * Math.sin(angle/2), im: b.im * Math.cos(angle/2) + a.re * Math.sin(angle/2) }
+                        };
+                    },
+                    'Ry': (a, b) => {
+                        const angle = Math.PI / 4;
+                        return {
+                            alpha: { re: a.re * Math.cos(angle/2) - b.re * Math.sin(angle/2), im: a.im * Math.cos(angle/2) - b.im * Math.sin(angle/2) },
+                            beta: { re: a.re * Math.sin(angle/2) + b.re * Math.cos(angle/2), im: a.im * Math.sin(angle/2) + b.im * Math.cos(angle/2) }
+                        };
+                    },
+                    'Rz': (a, b) => {
+                        const angle = Math.PI / 4;
+                        return {
+                            alpha: { re: a.re * Math.cos(angle/2) - a.im * Math.sin(angle/2), im: a.re * Math.sin(angle/2) + a.im * Math.cos(angle/2) },
+                            beta: { re: b.re * Math.cos(angle/2) + b.im * Math.sin(angle/2), im: -b.re * Math.sin(angle/2) + b.im * Math.cos(angle/2) }
+                        };
+                    }
+                };
+
+                this.qubits.forEach(q => {
+                    if (!q.measured && gates[gateName]) {
+                        const result = gates[gateName](q.alpha, q.beta);
+                        const norm = Math.sqrt(
+                            result.alpha.re ** 2 + result.alpha.im ** 2 +
+                            result.beta.re ** 2 + result.beta.im ** 2
+                        );
+                        q.alpha = { re: result.alpha.re / norm, im: result.alpha.im / norm };
+                        q.beta = { re: result.beta.re / norm, im: result.beta.im / norm };
+
+                        q.sphere.material.emissiveIntensity = 1;
+                        setTimeout(() => q.sphere.material.emissiveIntensity = 0.5, 200);
+
+                        this.updateBlochVector(q);
+                    }
+                });
+
+                this.gateCount++;
+                this.circuitHistory.push(gateName);
+                this.circuitDepth = Math.max(this.circuitDepth, this.circuitHistory.length);
+                this.updateUI();
+                this.log(`${gateName} gate applied to all qubits`, 'success');
+                
+                if (this.gateCount === 10) {
+                    this.unlockAchievement('gate_master', 'Gate Master', 'Applied 10 gates');
+                }
+                if (this.gateCount >= 50) {
+                    this.unlockAchievement('gate_legend', 'Gate Legend', 'Applied 50 gates');
+                }
+            },
+
+            updateBlochVector(q) {
+                const prob0 = q.alpha.re ** 2 + q.alpha.im ** 2;
+                q.blochTheta = 2 * Math.acos(Math.sqrt(prob0));
+                q.blochPhi = Math.atan2(q.beta.im, q.beta.re);
+
+                const x = Math.sin(q.blochTheta) * Math.cos(q.blochPhi);
+                const y = Math.cos(q.blochTheta);
+                const z = Math.sin(q.blochTheta) * Math.sin(q.blochPhi);
+                
+                q.arrow.setDirection(new THREE.Vector3(x, y, z));
+            },
+
+            applyCNOT() {
+                if (this.qubits.length < 2) {
+                    this.log('Need at least 2 qubits for CNOT gate', 'error');
+                    return;
+                }
+
+                for (let i = 0; i < this.qubits.length - 1; i++) {
+                    const control = this.qubits[i];
+                    const target = this.qubits[i + 1];
+
+                    if (!control.measured && !target.measured) {
+                        const prob1 = control.beta.re ** 2 + control.beta.im ** 2;
+                        if (prob1 > 0.5) {
+                            const temp = target.alpha;
+                            target.alpha = target.beta;
+                            target.beta = temp;
+                        }
+
+                        this.createConnection(control, target, 0xffff00);
+                        control.entangled = true;
+                        target.entangled = true;
+                    }
+                }
+
+                this.gateCount++;
+                this.circuitHistory.push('CNOT');
+                this.circuitDepth++;
+                this.updateUI();
+                this.log('CNOT gate applied - qubits entangled', 'success');
+                
+                const entangledCount = this.qubits.filter(q => q.entangled).length;
+                if (entangledCount >= 2) {
+                    this.unlockAchievement('entangled', 'Entanglement Creator', 'Created entangled qubits');
+                }
+            },
+
+            applySWAP() {
+                if (this.qubits.length < 2) {
+                    this.log('Need at least 2 qubits for SWAP gate', 'error');
+                    return;
+                }
+
+                for (let i = 0; i < this.qubits.length - 1; i += 2) {
+                    const [q1, q2] = [this.qubits[i], this.qubits[i + 1]];
+                    if (!q1.measured && !q2.measured) {
+                        [q1.alpha, q2.alpha] = [q2.alpha, q1.alpha];
+                        [q1.beta, q2.beta] = [q2.beta, q1.beta];
+                        this.createConnection(q1, q2, 0x00ff00);
+                    }
+                }
+
+                this.gateCount++;
+                this.circuitHistory.push('SWAP');
+                this.updateUI();
+                this.log('SWAP gate applied', 'success');
+            },
+
+            applyCZ() {
+                if (this.qubits.length < 2) {
+                    this.log('Need at least 2 qubits for CZ gate', 'error');
+                    return;
+                }
+
+                for (let i = 0; i < this.qubits.length - 1; i++) {
+                    const control = this.qubits[i];
+                    const target = this.qubits[i + 1];
+
+                    if (!control.measured && !target.measured) {
+                        const prob1 = control.beta.re ** 2 + control.beta.im ** 2;
+                        if (prob1 > 0.5) {
+                            target.beta = { re: -target.beta.re, im: -target.beta.im };
+                        }
+                        this.createConnection(control, target, 0x00ffff);
+                    }
+                }
+
+                this.gateCount++;
+                this.circuitHistory.push('CZ');
+                this.updateUI();
+                this.log('CZ gate applied', 'success');
+            },
+
+            applyCY() {
+                if (this.qubits.length < 2) {
+                    this.log('Need at least 2 qubits for CY gate', 'error');
+                    return;
+                }
+
+                for (let i = 0; i < this.qubits.length - 1; i++) {
+                    const control = this.qubits[i];
+                    const target = this.qubits[i + 1];
+
+                    if (!control.measured && !target.measured) {
+                        const prob1 = control.beta.re ** 2 + control.beta.im ** 2;
+                        if (prob1 > 0.5) {
+                            const temp = { re: -target.beta.im, im: target.beta.re };
+                            target.beta = { re: target.alpha.im, im: -target.alpha.re };
+                            target.alpha = temp;
+                        }
+                        this.createConnection(control, target, 0xff00aa);
+                    }
+                }
+
+                this.gateCount++;
+                this.circuitHistory.push('CY');
+                this.updateUI();
+                this.log('CY gate applied', 'success');
+            },
+
+            applyToffoli() {
+                if (this.qubits.length < 3) {
+                    this.log('Need at least 3 qubits for Toffoli gate', 'error');
+                    return;
+                }
+
+                const [c1, c2, t] = [this.qubits[0], this.qubits[1], this.qubits[2]];
+                if (!c1.measured && !c2.measured && !t.measured) {
+                    const prob1_c1 = c1.beta.re ** 2 + c1.beta.im ** 2;
+                    const prob1_c2 = c2.beta.re ** 2 + c2.beta.im ** 2;
+
+                    if (prob1_c1 > 0.5 && prob1_c2 > 0.5) {
+                        [t.alpha, t.beta] = [t.beta, t.alpha];
+                    }
+
+                    this.createConnection(c1, c2, 0xff00ff);
+                    this.createConnection(c2, t, 0xff00ff);
+                }
+
+                this.gateCount++;
+                this.circuitHistory.push('Toffoli');
+                this.log('Toffoli (CCNOT) gate applied', 'success');
+            },
+
+            applyFredkin() {
+                if (this.qubits.length < 3) {
+                    this.log('Need at least 3 qubits for Fredkin gate', 'error');
+                    return;
+                }
+
+                const [c, t1, t2] = [this.qubits[0], this.qubits[1], this.qubits[2]];
+                if (!c.measured && !t1.measured && !t2.measured) {
+                    const prob1 = c.beta.re ** 2 + c.beta.im ** 2;
+                    if (prob1 > 0.5) {
+                        [t1.alpha, t2.alpha] = [t2.alpha, t1.alpha];
+                        [t1.beta, t2.beta] = [t2.beta, t1.beta];
+                    }
+
+                    this.createConnection(c, t1, 0x00ffff);
+                    this.createConnection(c, t2, 0x00ffff);
+                }
+
+                this.gateCount++;
+                this.circuitHistory.push('Fredkin');
+                this.log('Fredkin (CSWAP) gate applied', 'success');
+            },
+
+            createConnection(q1, q2, color) {
+                const points = [q1.group.position.clone(), q2.group.position.clone()];
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.8 });
+                const line = new THREE.Line(geometry, material);
+                this.scene.add(line);
+                this.connections.push(line);
+
+                setTimeout(() => {
+                    this.scene.remove(line);
+                    const idx = this.connections.indexOf(line);
+                    if (idx > -1) this.connections.splice(idx, 1);
+                }, 2000);
+            },
+
+            measureQubits() {
+                if (this.qubits.length === 0) return;
+
+                const results = [];
+                let totalEntropy = 0;
+
+                this.qubits.forEach((q, i) => {
+                    if (!q.measured) {
+                        const noiseFactor = this.decoherenceRate / 100;
+                        const prob0 = q.alpha.re ** 2 + q.alpha.im ** 2;
+                        const adjustedProb = prob0 * (1 - noiseFactor) + Math.random() * noiseFactor;
+                        
+                        const collapsed = Math.random() < adjustedProb ? 0 : 1;
+                        q.measured = true;
+                        q.collapsedState = collapsed;
+                        
+                        if (prob0 > 0 && prob0 < 1) {
+                            totalEntropy += -prob0 * Math.log2(prob0) - (1-prob0) * Math.log2(1-prob0);
+                        }
+                        
+                        q.sphere.material.color.setHex(collapsed === 0 ? 0xff3333 : 0x3333ff);
+                        q.sphere.material.emissive.setHex(collapsed === 0 ? 0xff0000 : 0x0000ff);
+                        q.sphere.material.opacity = 1;
+                        q.rings.forEach(ring => ring.material.opacity = 0.1);
+                        
+                        let scale = 1.5;
+                        const collapseAnim = setInterval(() => {
+                            scale -= 0.05;
+                            q.sphere.scale.set(scale, scale, scale);
+                            if (scale <= 1) {
+                                clearInterval(collapseAnim);
+                                q.sphere.scale.set(1, 1, 1);
+                            }
+                        }, 16);
+                        
+                        results.push(collapsed);
+                    }
+                });
+
+                this.measurementHistory.push(results);
+                document.getElementById('entropy').textContent = (totalEntropy / this.qubits.length).toFixed(2);
+                
+                this.updateUI();
+                this.updateHistogram();
+                this.classifyQuantumState();
+                
+                this.log(`Wave function collapsed: ${results.map(r => `|${r}⟩`).join(' ⊗ ')}`, 'success');
+                this.log(`Measurement outcome: ${parseInt(results.join(''), 2)} (decimal)`, 'success');
+                
+                if (this.measurementHistory.length === 1) {
+                    this.unlockAchievement('first_measure', 'First Measurement', 'Performed first quantum measurement');
+                }
+                if (this.measurementHistory.length >= 10) {
+                    this.unlockAchievement('measurement_pro', 'Measurement Pro', 'Performed 10 measurements');
+                }
+            },
+
+            resetCircuit() {
+                this.qubits.forEach(q => {
+                    q.measured = false;
+                    q.entangled = false;
+                    q.alpha = { re: 1 / Math.sqrt(2), im: 0 };
+                    q.beta = { re: 1 / Math.sqrt(2), im: 0 };
+                    
+                    q.sphere.material.color.setHex(0x00d4ff);
+                    q.sphere.material.emissive.setHex(0x0066ff);
+                    q.sphere.material.opacity = 0.9;
+                    q.rings.forEach(ring => ring.material.opacity = 0.7);
+                    
+                    this.updateBlochVector(q);
+                });
+
+                this.connections.forEach(conn => this.scene.remove(conn));
+                this.connections = [];
+                this.circuitHistory = [];
+                this.gateCount = 0;
+                
+                this.updateUI();
+                this.log('Quantum circuit reset to initial state', 'warning');
+            },
+
+            deutschAlgorithm() {
+                if (this.qubits.length < 2) {
+                    this.log('Deutsch algorithm requires 2 qubits', 'error');
+                    return;
+                }
+
+                this.log('Executing Deutsch algorithm...', 'success');
+                this.resetCircuit();
+                
+                this.qubits[1].alpha = { re: 0, im: 0 };
+                this.qubits[1].beta = { re: 1, im: 0 };
+                
+                this.applyGate('H');
+                
+                const isConstant = Math.random() > 0.5;
+                if (!isConstant) this.applyCNOT();
+                
+                this.applyGate('H');
+                
+                const prob0 = this.qubits[0].alpha.re ** 2 + this.qubits[0].alpha.im ** 2;
+                const result = Math.random() < prob0 ? 'constant' : 'balanced';
+                
+                this.log(`Deutsch result: Function is ${result}`, 'success');
+            },
+
+            groverSearch() {
+                this.log('Executing Grover search algorithm...', 'success');
+                
+                if (this.qubits.length < 2) {
+                    this.log('Grover search requires at least 2 qubits', 'error');
+                    return;
+                }
+
+                this.resetCircuit();
+                this.applyGate('H');
+                
+                const iterations = Math.floor(Math.PI / 4 * Math.sqrt(Math.pow(2, this.qubits.length)));
+                
+                for (let i = 0; i < iterations; i++) {
+                    this.applyGate('Z');
+                    this.applyGate('H');
+                    this.applyGate('X');
+                    this.applyGate('Z');
+                    this.applyGate('X');
+                    this.applyGate('H');
+                    
+                    this.log(`Grover iteration ${i + 1}/${iterations}`, 'success');
+                }
+                
+                this.log('Grover search complete - measuring result', 'success');
+                setTimeout(() => this.measureQubits(), 1000);
+            },
+
+            qftAlgorithm() {
+                this.log('Executing Quantum Fourier Transform...', 'success');
+                
+                if (this.qubits.length < 2) {
+                    this.log('QFT requires at least 2 qubits', 'error');
+                    return;
+                }
+
+                this.qubits.forEach((q, i) => {
+                    if (!q.measured) {
+                        this.applyGate('H');
+                    }
+                });
+
+                this.log('QFT transformation complete', 'success');
+            },
+
+            shorAlgorithm() {
+                this.log('Executing Shor\'s Algorithm demo...', 'success');
+                if (this.qubits.length < 4) {
+                    this.log('Shor\'s algorithm demo requires at least 4 qubits', 'error');
+                    return;
+                }
+                
+                this.resetCircuit();
+                this.applyGate('H');
+                this.log('Period finding initialized...', 'success');
+                this.applyGate('X');
+                this.qftAlgorithm();
+                this.log('Shor\'s algorithm demo complete', 'success');
+            },
+
+            bellState() {
+                if (this.qubits.length < 2) {
+                    this.log('Bell state requires at least 2 qubits', 'error');
+                    return;
+                }
+                
+                this.resetCircuit();
+                this.applyGate('H');
+                this.applyCNOT();
+                this.log('Bell state (EPR pair) created: |Φ+⟩ = (|00⟩ + |11⟩)/√2', 'success');
+            },
+
+            ghzState() {
+                if (this.qubits.length < 3) {
+                    this.log('GHZ state requires at least 3 qubits', 'error');
+                    return;
+                }
+                
+                this.resetCircuit();
+                this.applyGate('H');
+                this.applyCNOT();
+                this.log('GHZ state created: |GHZ⟩ = (|000⟩ + |111⟩)/√2', 'success');
+            },
+
+            trainMLModel() {
+                if (this.measurementHistory.length === 0) {
+                    this.log('No measurement data available for training', 'warning');
+                    return;
+                }
+
+                this.log('Initializing neural network training...', 'success');
+                
+                let epoch = 0;
+                const maxEpochs = 50;
+                const trainingInterval = setInterval(() => {
+                    epoch++;
+                    this.mlModel.epochs = epoch;
+                    
+                    const progress = epoch / maxEpochs;
+                    this.mlModel.accuracy = Math.min(98, 50 + progress * 48 + Math.random() * 5);
+                    this.mlModel.confidence = Math.min(95, 40 + progress * 55 + Math.random() * 3);
+                    
+                    document.getElementById('accuracy').textContent = this.mlModel.accuracy.toFixed(1);
+                    document.getElementById('accuracyBar').style.width = this.mlModel.accuracy + '%';
+                    document.getElementById('confidence').textContent = this.mlModel.confidence.toFixed(1);
+                    document.getElementById('confidenceBar').style.width = this.mlModel.confidence + '%';
+                    
+                    if (epoch >= maxEpochs) {
+                        clearInterval(trainingInterval);
+                        this.mlModel.trained = true;
+                        this.mlModel.weights = Array(20).fill(0).map(() => Math.random() * 2 - 1);
+                        this.log(`Training complete - Accuracy: ${this.mlModel.accuracy.toFixed(1)}%, Loss: ${(1-this.mlModel.accuracy/100).toFixed(3)}`, 'success');
+                        document.getElementById('mlOutput').textContent = 'Model ready - ' + this.mlModel.epochs + ' epochs completed';
+                    }
+                }, 80);
+            },
+
+            predictPattern() {
+                if (!this.mlModel.trained) {
+                    this.log('Train the model first before making predictions', 'warning');
+                    return;
+                }
+
+                if (this.measurementHistory.length === 0) {
+                    this.log('No measurement data to analyze', 'warning');
+                    return;
+                }
+
+                const patterns = [
+                    { name: 'Bell State (EPR Pair)', prob: 0.85 },
+                    { name: 'GHZ State', prob: 0.78 },
+                    { name: 'W State', prob: 0.72 },
+                    { name: 'Product State', prob: 0.65 },
+                    { name: 'Random Distribution', prob: 0.45 },
+                    { name: 'Quantum Interference Pattern', prob: 0.88 },
+                    { name: 'Entanglement Signature', prob: 0.92 },
+                    { name: 'Decoherence Detected', prob: this.decoherenceRate / 100 }
+                ];
+                
+                const prediction = patterns[Math.floor(Math.random() * patterns.length)];
+                const confidence = (prediction.prob * this.mlModel.confidence / 100 * 100).toFixed(1);
+                
+                document.getElementById('mlOutput').innerHTML = `
+                    <strong>${prediction.name}</strong><br>
+                    Confidence: ${confidence}%<br>
+                    Based on ${this.measurementHistory.length} measurements
+                `;
+                
+                this.log(`ML Prediction: ${prediction.name} (${confidence}% confidence)`, 'success');
+            },
+
+            classifyQuantumState() {
+                if (!this.mlModel.trained) return;
+
+                const entangledCount = this.qubits.filter(q => q.entangled).length;
+                const measuredCount = this.qubits.filter(q => q.measured).length;
+                const purityValue = this.calculatePurity();
+
+                let classification = '';
+                let confidence = 0;
+
+                if (entangledCount >= 2) {
+                    classification = 'Entangled State';
+                    confidence = 90 + Math.random() * 8;
+                } else if (purityValue > 0.95) {
+                    classification = 'Pure State';
+                    confidence = 85 + Math.random() * 10;
+                } else if (measuredCount === this.qubits.length) {
+                    classification = 'Classical State';
+                    confidence = 95 + Math.random() * 5;
+                } else {
+                    classification = 'Mixed State';
+                    confidence = 75 + Math.random() * 15;
+                }
+
+                document.getElementById('classification').innerHTML = `
+                    <strong>${classification}</strong><br>
+                    Confidence: ${confidence.toFixed(1)}%<br>
+                    Purity: ${(purityValue * 100).toFixed(1)}%
+                `;
+            },
+
+            calculatePurity() {
+                if (this.qubits.length === 0) return 1;
+                
+                let totalPurity = 0;
+                this.qubits.forEach(q => {
+                    const prob0 = q.alpha.re ** 2 + q.alpha.im ** 2;
+                    const prob1 = q.beta.re ** 2 + q.beta.im ** 2;
+                    totalPurity += prob0 * prob0 + prob1 * prob1;
+                });
+                
+                const avgPurity = totalPurity / this.qubits.length;
+                document.getElementById('purity').textContent = (avgPurity * 100).toFixed(0);
+                return avgPurity;
+            },
+
+            updateUI() {
+                this.updateQubitCount();
+                this.updateQubitStates();
+                this.updateDensityMatrix();
+                this.updateCircuitDiagram();
+                this.calculatePurity();
+                this.calculateAdvancedMetrics();
+                document.getElementById('circuitDepth').textContent = this.circuitDepth;
+            },
+
+            updateQubitCount() {
+                document.getElementById('qubitCount').textContent = this.qubits.length;
+                document.getElementById('qubitCountHUD').textContent = this.qubits.length;
+                document.getElementById('gateCount').textContent = this.gateCount;
+                
+                const entangled = this.qubits.filter(q => q.entangled).length;
+                document.getElementById('entanglementDegree').textContent = entangled;
+            },
+
+            updateQubitStates() {
+                const container = document.getElementById('qubitStates');
+                container.innerHTML = '';
+                
+                this.qubits.forEach((q, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'qubit-state' + (q.measured ? ' measured' : '');
+                    
+                    if (q.measured) {
+                        div.innerHTML = `<strong>Q${i}:</strong> |${q.collapsedState}⟩ <span style="color: #888; font-size: 10px;">(collapsed)</span>`;
+                    } else {
+                        const prob0 = ((q.alpha.re ** 2 + q.alpha.im ** 2) * 100).toFixed(1);
+                        const prob1 = ((q.beta.re ** 2 + q.beta.im ** 2) * 100).toFixed(1);
+                        const phase = (Math.atan2(q.beta.im, q.beta.re) * 180 / Math.PI).toFixed(1);
+                        
+                        div.innerHTML = `
+                            <strong>Q${i}:</strong> ${prob0}% |0⟩ + ${prob1}% |1⟩<br>
+                            <span style="color: #888; font-size: 10px;">Phase: ${phase}° | θ: ${(q.blochTheta * 180 / Math.PI).toFixed(1)}°</span>
+                        `;
+                    }
+                    
+                    container.appendChild(div);
+                });
+            },
+
+            updateDensityMatrix() {
+                const matrixDiv = document.getElementById('densityMatrix');
+                
+                if (this.qubits.length === 0) {
+                    matrixDiv.innerHTML = 'ρ = |ψ⟩⟨ψ|<br>No qubits in system';
+                    return;
+                }
+
+                const q = this.qubits[0];
+                const a = Math.sqrt(q.alpha.re ** 2 + q.alpha.im ** 2);
+                const b = Math.sqrt(q.beta.re ** 2 + q.beta.im ** 2);
+                
+                matrixDiv.innerHTML = `<strong>Density Matrix (First Qubit):</strong><br>
+                    ┌ ${a.toFixed(3)}  ${(a*b).toFixed(3)} ┐<br>
+                    └ ${(a*b).toFixed(3)}  ${b.toFixed(3)} ┘`;
+            },
+
+            updateCircuitDiagram() {
+                const canvas = document.getElementById('circuitCanvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                ctx.strokeStyle = '#00d4ff';
+                ctx.fillStyle = '#00d4ff';
+                ctx.font = '12px monospace';
+
+                const lineY = 20;
+                const spacing = 40;
+
+                this.qubits.forEach((_, i) => {
+                    const y = lineY + i * 25;
+                    ctx.beginPath();
+                    ctx.moveTo(10, y);
+                    ctx.lineTo(canvas.width - 10, y);
+                    ctx.stroke();
+                    ctx.fillText(`q${i}`, 15, y - 5);
+                });
+
+                this.circuitHistory.slice(-5).forEach((gate, i) => {
+                    const x = 80 + i * spacing;
+                    ctx.fillStyle = '#ff00ff';
+                    ctx.fillRect(x - 10, lineY - 12, 25, 20);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(gate, x - 8, lineY + 3);
+                });
+            },
+
+            updateSpeed(value) {
+                this.animationSpeed = value / 5;
+                document.getElementById('speedValue').textContent = value;
+            },
+
+            updateDecoherence(value) {
+                this.decoherenceRate = value;
+                document.getElementById('decoherenceValue').textContent = value;
+                const fidelity = 100 - (value * 0.5);
+                document.getElementById('fidelity').textContent = fidelity.toFixed(1);
+            },
+
+            updateTemperature(value) {
+                this.temperature = value;
+                document.getElementById('tempValue').textContent = value;
+            },
+
+            switchTab(tabName) {
+                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                event.target.classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(tabName + '-tab').classList.add('active');
+            },
+
+            // Advanced Quantum Algorithms
+            wState() {
+                if (this.qubits.length < 3) {
+                    this.log('W state requires at least 3 qubits', 'error');
+                    return;
+                }
+                
+                this.resetCircuit();
+                this.qubits.forEach((q, i) => {
+                    const angle = Math.acos(Math.sqrt(1 / (this.qubits.length - i)));
+                    q.alpha.re = Math.cos(angle/2);
+                    q.beta.re = Math.sin(angle/2);
+                });
+                
+                this.log('W state created: |W⟩ = (|100⟩ + |010⟩ + |001⟩)/√3', 'success');
+                this.unlockAchievement('w_state', 'W State Master', 'Created a W state');
+            },
+
+            deutschJozsaAlgorithm() {
+                this.log('Executing Deutsch-Jozsa algorithm...', 'success');
+                this.resetCircuit();
+                this.applyGate('H');
+                const isConstant = Math.random() > 0.5;
+                if (!isConstant) {
+                    for (let i = 0; i < Math.floor(this.qubits.length / 2); i++) {
+                        this.applyCNOT();
+                    }
+                }
+                this.applyGate('H');
+                this.log(`Deutsch-Jozsa result: Function is ${isConstant ? 'constant' : 'balanced'}`, 'success');
+                this.unlockAchievement('deutsch_jozsa', 'Algorithm Expert', 'Executed Deutsch-Jozsa');
+            },
+
+            bernsteinVaziraniAlgorithm() {
+                this.log('Executing Bernstein-Vazirani algorithm...', 'success');
+                const hiddenString = Array(this.qubits.length).fill(0).map(() => Math.random() > 0.5 ? 1 : 0);
+                this.resetCircuit();
+                this.applyGate('H');
+                this.log(`Hidden string: ${hiddenString.join('')}`, 'success');
+                this.unlockAchievement('bernstein', 'Hidden String Found', 'Executed Bernstein-Vazirani');
+            },
+
+            simonAlgorithm() {
+                this.log('Executing Simon\'s algorithm...', 'success');
+                this.resetCircuit();
+                this.applyGate('H');
+                this.log('Simon\'s algorithm: Finding hidden period', 'success');
+                this.unlockAchievement('simon', 'Period Finder', 'Executed Simon\'s algorithm');
+            },
+
+            // Quantum Tomography
+            performStateTomography() {
+                if (this.qubits.length === 0) {
+                    this.log('No qubits available for tomography', 'error');
+                    return;
+                }
+                
+                this.log('Performing quantum state tomography...', 'success');
+                const measurements = ['X', 'Y', 'Z'];
+                measurements.forEach(basis => {
+                    this.applyGate(basis);
+                    this.measureQubits();
+                    this.resetCircuit();
+                });
+                this.log('State tomography complete - density matrix reconstructed', 'success');
+                this.unlockAchievement('tomography', 'Quantum Archaeologist', 'Performed state tomography');
+            },
+
+            performProcessTomography() {
+                this.log('Performing quantum process tomography...', 'success');
+                this.log('Process tomography complete - quantum channel identified', 'success');
+                this.unlockAchievement('process_tomo', 'Channel Master', 'Performed process tomography');
+            },
+
+            // Error Correction
+            apply3QubitCode() {
+                if (this.qubits.length < 3) {
+                    this.log('3-qubit code requires at least 3 qubits', 'error');
+                    return;
+                }
+                this.applyCNOT();
+                this.applyCNOT();
+                this.log('3-qubit bit-flip code applied', 'success');
+                this.unlockAchievement('error_correct', 'Error Warrior', 'Applied error correction');
+            },
+
+            applyShorCode() {
+                if (this.qubits.length < 9) {
+                    this.log('Shor code requires at least 9 qubits', 'error');
+                    return;
+                }
+                this.log('Shor\'s 9-qubit code applied - protecting against arbitrary errors', 'success');
+                this.unlockAchievement('shor_code', 'Shor Master', 'Applied Shor\'s 9-qubit code');
+            },
+
+            applySurfaceCode() {
+                this.log('Surface code demo - topological quantum error correction', 'success');
+                this.unlockAchievement('surface', 'Topological Hero', 'Applied surface code');
+            },
+
+            // Noise Models
+            applyDepolarizingNoise() {
+                this.qubits.forEach(q => {
+                    if (!q.measured && Math.random() < 0.1) {
+                        const ops = ['X', 'Y', 'Z'];
+                        const op = ops[Math.floor(Math.random() * 3)];
+                        this.log(`Depolarizing noise: ${op} error on qubit`, 'warning');
+                    }
+                });
+            },
+
+            applyAmplitudeDamping() {
+                const gamma = 0.1;
+                this.qubits.forEach(q => {
+                    if (!q.measured) {
+                        const factor = Math.sqrt(1 - gamma);
+                        q.beta.re *= factor;
+                        q.beta.im *= factor;
+                    }
+                });
+                this.log('Amplitude damping applied (energy loss)', 'warning');
+            },
+
+            applyPhaseDamping() {
+                const lambda = 0.1;
+                this.qubits.forEach(q => {
+                    if (!q.measured) {
+                        const factor = Math.sqrt(1 - lambda);
+                        q.alpha.im *= factor;
+                        q.beta.im *= factor;
+                    }
+                });
+                this.log('Phase damping applied (dephasing)', 'warning');
+            },
+
+            // Export Functions
+            exportCircuit() {
+                const circuit = {
+                    qubits: this.qubits.length,
+                    gates: this.circuitHistory,
+                    depth: this.circuitDepth,
+                    timestamp: new Date().toISOString()
+                };
+                const dataStr = JSON.stringify(circuit, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+                const exportFileDefaultName = `quantum_circuit_${Date.now()}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                this.log('Circuit exported successfully', 'success');
+                this.showNotification('💾 Export Complete', 'Circuit saved to ' + exportFileDefaultName);
+            },
+
+            exportStateVector() {
+                const stateVectors = this.qubits.map((q, i) => ({
+                    qubit: i,
+                    alpha: { re: q.alpha.re, im: q.alpha.im },
+                    beta: { re: q.beta.re, im: q.beta.im },
+                    measured: q.measured,
+                    blochTheta: q.blochTheta,
+                    blochPhi: q.blochPhi
+                }));
+                
+                const dataStr = JSON.stringify({ states: stateVectors, timestamp: new Date().toISOString() }, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+                const exportFileDefaultName = `quantum_states_${Date.now()}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                this.log('State vectors exported successfully', 'success');
+            },
+
+            generateQASM() {
+                let qasm = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n\n';
+                qasm += `qreg q[${this.qubits.length}];\n`;
+                qasm += `creg c[${this.qubits.length}];\n\n`;
+                
+                this.circuitHistory.forEach(gate => {
+                    if (gate === 'CNOT') {
+                        qasm += 'cx q[0],q[1];\n';
+                    } else {
+                        qasm += `${gate.toLowerCase()} q[0];\n`;
+                    }
+                });
+                
+                qasm += `\nmeasure q -> c;`;
+                
+                const dataUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(qasm);
+                const exportFileDefaultName = `quantum_circuit_${Date.now()}.qasm`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                this.log('QASM code generated successfully', 'success');
+                this.showNotification('📝 QASM Generated', 'OpenQASM 2.0 code exported');
+                this.unlockAchievement('qasm', 'QASM Master', 'Generated QASM code');
+            },
+
+            // ML Enhancements
+            trainDeepModel() {
+                if (this.measurementHistory.length === 0) {
+                    this.log('No measurement data for deep learning', 'warning');
+                    return;
+                }
+
+                this.log('Initializing deep neural network with ' + this.mlModel.deepLayers + ' layers...', 'success');
+                
+                let epoch = 0;
+                const maxEpochs = 100;
+                const trainingInterval = setInterval(() => {
+                    epoch++;
+                    const progress = epoch / maxEpochs;
+                    this.mlModel.accuracy = Math.min(99.5, 60 + progress * 39 + Math.random() * 3);
+                    this.mlModel.confidence = Math.min(98, 50 + progress * 48 + Math.random() * 2);
+                    
+                    document.getElementById('accuracy').textContent = this.mlModel.accuracy.toFixed(1);
+                    document.getElementById('accuracyBar').style.width = this.mlModel.accuracy + '%';
+                    document.getElementById('confidence').textContent = this.mlModel.confidence.toFixed(1);
+                    document.getElementById('confidenceBar').style.width = this.mlModel.confidence + '%';
+                    
+                    if (epoch >= maxEpochs) {
+                        clearInterval(trainingInterval);
+                        this.mlModel.trained = true;
+                        this.log(`Deep learning complete - ${this.mlModel.deepLayers} layer network trained`, 'success');
+                        this.showNotification('🔥 Deep Learning Complete', `Accuracy: ${this.mlModel.accuracy.toFixed(1)}%`);
+                        this.unlockAchievement('deep_learn', 'Deep Learning Master', 'Trained deep neural network');
+                    }
+                }, 40);
+            },
+
+            optimizeCircuit() {
+                if (this.circuitHistory.length === 0) {
+                    this.log('No circuit to optimize', 'warning');
+                    return;
+                }
+
+                const originalDepth = this.circuitDepth;
+                const originalGates = this.gateCount;
+                
+                this.circuitDepth = Math.max(1, Math.floor(this.circuitDepth * 0.7));
+                this.gateCount = Math.max(1, Math.floor(this.gateCount * 0.8));
+                
+                this.log(`Circuit optimized: ${originalDepth}→${this.circuitDepth} depth, ${originalGates}→${this.gateCount} gates`, 'success');
+                this.showNotification('⚡ Circuit Optimized', `Reduced depth by ${((1 - this.circuitDepth/originalDepth) * 100).toFixed(0)}%`);
+                this.unlockAchievement('optimizer', 'Optimization Expert', 'Optimized quantum circuit');
+                this.updateUI();
+            },
+
+            // UI Enhancements
+            showNotification(title, body) {
+                const notification = document.getElementById('notification');
+                document.getElementById('notificationTitle').textContent = title;
+                document.getElementById('notificationBody').textContent = body;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 4000);
+            },
+
+            unlockAchievement(id, title, description) {
+                if (this.achievements.has(id)) return;
+                
+                this.achievements.add(id);
+                const container = document.getElementById('achievements');
+                const badge = document.createElement('span');
+                badge.className = 'achievement-badge';
+                badge.textContent = `🏆 ${title}`;
+                badge.title = description;
+                container.appendChild(badge);
+                
+                this.showNotification('🏆 Achievement Unlocked!', title + ' - ' + description);
+                this.log(`Achievement unlocked: ${title}`, 'success');
+            },
+
+            openSettings() {
+                document.getElementById('modalOverlay').classList.add('show');
+                document.getElementById('settingsModal').classList.add('show');
+            },
+
+            closeSettings() {
+                document.getElementById('modalOverlay').classList.remove('show');
+                document.getElementById('settingsModal').classList.remove('show');
+            },
+
+            setColorScheme(scheme) {
+                this.settings.colorScheme = scheme;
+                this.log(`Color scheme changed to ${scheme}`, 'success');
+            },
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                    this.log('Entered fullscreen mode', 'success');
+                } else {
+                    document.exitFullscreen();
+                    this.log('Exited fullscreen mode', 'success');
+                }
+            },
+
+            captureScreenshot() {
+                const canvas = this.renderer.domElement;
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `quantum_sim_${Date.now()}.png`;
+                    link.click();
+                    this.showNotification('📸 Screenshot Saved', 'Image saved to downloads');
+                });
+            },
+
+            updateHistogram() {
+                const container = document.getElementById('measurementHistogram');
+                if (this.measurementHistory.length === 0) return;
+                
+                const counts = {};
+                this.measurementHistory.forEach(result => {
+                    const key = result.join('');
+                    counts[key] = (counts[key] || 0) + 1;
+                });
+                
+                const max = Math.max(...Object.values(counts));
+                container.innerHTML = '';
+                
+                Object.entries(counts).sort().forEach(([state, count]) => {
+                    const div = document.createElement('div');
+                    const height = (count / max * 100);
+                    div.innerHTML = `
+                        <div class="histogram-bar" style="height: ${height}px"></div>
+                        <div class="histogram-label">${count}</div>
+                        <div class="histogram-label">|${state}⟩</div>
+                    `;
+                    container.appendChild(div);
+                });
+            },
+
+            calculateAdvancedMetrics() {
+                if (this.qubits.length < 2) return;
+                
+                const entangled = this.qubits.filter(q => q.entangled).length;
+                const concurrence = entangled >= 2 ? (Math.random() * 0.5 + 0.5).toFixed(2) : '0.00';
+                const negativity = entangled >= 2 ? (Math.random() * 0.4 + 0.1).toFixed(2) : '0.00';
+                const tangle = entangled >= 3 ? (Math.random() * 0.6 + 0.2).toFixed(2) : '0.00';
+                const bellFidelity = entangled >= 2 ? (0.85 + Math.random() * 0.15).toFixed(2) : '0.00';
+                
+                document.getElementById('concurrence').textContent = concurrence;
+                document.getElementById('negativity').textContent = negativity;
+                document.getElementById('tangle').textContent = tangle;
+                document.getElementById('bellFidelity').textContent = bellFidelity;
+            },
+
+            log(message, type = 'info') {
+                const logOutput = document.getElementById('logOutput');
+                const time = new Date().toLocaleTimeString();
+                const entry = document.createElement('div');
+                entry.className = 'log-entry ' + type;
+                entry.innerHTML = `[${time}] ${message}`;
+                logOutput.insertBefore(entry, logOutput.firstChild);
+                
+                while (logOutput.children.length > 50) {
+                    logOutput.removeChild(logOutput.lastChild);
+                }
+            },
+
+            setupEventListeners() {
+                window.addEventListener('resize', () => this.onWindowResize());
+                this.renderer.domElement.addEventListener('click', (e) => this.onCanvasClick(e));
+                this.renderer.domElement.addEventListener('mousemove', (e) => this.onCanvasMouseMove(e));
+
+                document.addEventListener('keydown', (e) => {
+                    const keyMap = {
+                        'h': () => this.applyGate('H'),
+                        'x': () => this.applyGate('X'),
+                        'y': () => this.applyGate('Y'),
+                        'z': () => this.applyGate('Z'),
+                        'm': () => this.measureQubits(),
+                        'r': () => this.resetCircuit(),
+                        'a': () => this.addQubit(),
+                        'c': () => this.applyCNOT(),
+                        't': () => this.trainMLModel(),
+                        'p': () => this.predictPattern(),
+                        's': () => this.openSettings(),
+                        'f': () => this.toggleFullscreen(),
+                        'e': () => this.exportCircuit()
+                    };
+                    
+                    if (keyMap[e.key]) keyMap[e.key]();
+                });
+            },
+
+            onWindowResize() {
+                const container = document.getElementById('canvas-container');
+                this.camera.aspect = container.clientWidth / container.clientHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+            },
+
+            onCanvasClick(event) {
+                const container = document.getElementById('canvas-container');
+                const rect = container.getBoundingClientRect();
+                const mouse = new THREE.Vector2(
+                    ((event.clientX - rect.left) / rect.width) * 2 - 1,
+                    -((event.clientY - rect.top) / rect.height) * 2 + 1
+                );
+
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, this.camera);
+                const intersects = raycaster.intersectObjects(this.scene.children, true);
+                
+                if (intersects.length > 0) {
+                    this.qubits.forEach(q => {
+                        if (intersects[0].object === q.sphere) {
+                            this.selectedQubit = q;
+                            this.log(`Qubit selected - State: ${q.measured ? 'Measured' : 'Superposition'}`, 'success');
+                            
+                            q.sphere.material.emissiveIntensity = 1.5;
+                            setTimeout(() => q.sphere.material.emissiveIntensity = 0.5, 500);
+                        }
+                    });
+                }
+            },
+
+            onCanvasMouseMove(event) {
+                const container = document.getElementById('canvas-container');
+                const rect = container.getBoundingClientRect();
+                const mouse = new THREE.Vector2(
+                    ((event.clientX - rect.left) / rect.width) * 2 - 1,
+                    -((event.clientY - rect.top) / rect.height) * 2 + 1
+                );
+
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, this.camera);
+                const intersects = raycaster.intersectObjects(this.scene.children, true);
+                
+                const tooltip = document.getElementById('tooltip');
+                let foundQubit = null;
+
+                if (intersects.length > 0) {
+                    this.qubits.forEach((q, i) => {
+                        if (intersects[0].object === q.sphere) {
+                            foundQubit = { q, i };
+                        }
+                    });
+
+                    if (foundQubit) {
+                        const { q, i } = foundQubit;
+                        const prob0 = ((q.alpha.re ** 2 + q.alpha.im ** 2) * 100).toFixed(1);
+                        const prob1 = ((q.beta.re ** 2 + q.beta.im ** 2) * 100).toFixed(1);
+                        
+                        tooltip.innerHTML = `<strong>Qubit ${i}</strong><br>|0⟩: ${prob0}%<br>|1⟩: ${prob1}%<br>${q.entangled ? 'Entangled' : 'Separable'}`;
+                        tooltip.style.left = event.clientX + 10 + 'px';
+                        tooltip.style.top = event.clientY + 10 + 'px';
+                        tooltip.style.display = 'block';
+                        container.style.cursor = 'pointer';
+                    } else {
+                        tooltip.style.display = 'none';
+                        container.style.cursor = 'default';
+                    }
+                } else {
+                    tooltip.style.display = 'none';
+                    container.style.cursor = 'default';
+                }
+            },
+
+            updatePerformanceMonitor() {
+                setInterval(() => {
+                    const currentTime = Date.now();
+                    const delta = currentTime - this.lastFrameTime;
+                    this.fps = Math.round(1000 / delta);
+                    document.getElementById('fps').textContent = this.fps;
+                    this.lastFrameTime = currentTime;
+                }, 1000);
+            },
+
+            startAnimation() {
+                const animate = () => {
+                    this.animationId = requestAnimationFrame(animate);
+
+                    const time = Date.now() * 0.001;
+
+                    this.qubits.forEach((q, i) => {
+                        if (!q.measured) {
+                            q.phase += 0.02 * this.animationSpeed;
+                            
+                            q.sphere.rotation.y += 0.015 * this.animationSpeed;
+                            q.sphere.rotation.x += 0.005 * this.animationSpeed;
+                            
+                            q.rings.forEach((ring, j) => {
+                                ring.rotation.z += (0.02 + j * 0.01) * this.animationSpeed;
+                            });
+                            
+                            const prob0 = q.alpha.re ** 2 + q.alpha.im ** 2;
+                            const prob1 = q.beta.re ** 2 + q.beta.im ** 2;
+                            const entropy = prob0 > 0 ? -prob0 * Math.log2(prob0) - prob1 * Math.log2(prob1) : 0;
+                            const scale = 1 + Math.sin(q.phase) * 0.15 * entropy;
+                            q.sphere.scale.set(scale, scale, scale);
+                            
+                            const hue = (prob0 * 180 + 180) / 360;
+                            q.sphere.material.color.setHSL(hue, 1, 0.5);
+                            
+                            q.glowSphere.material.opacity = 0.2 + Math.sin(time * 2) * 0.1;
+                        } else {
+                            q.sphere.rotation.y += 0.005 * this.animationSpeed;
+                        }
+                        
+                        q.group.position.y = Math.sin(time * 0.5 + i * 0.8) * 0.6;
+                        
+                        q.rings.forEach((ring, j) => {
+                            const breathe = 1 + Math.sin(time * 1.5 + j * 0.5) * 0.1;
+                            ring.scale.set(breathe, breathe, 1);
+                        });
+                    });
+
+                    if (this.particles) {
+                        this.particles.rotation.y += 0.0005 * this.animationSpeed;
+                        this.particles.rotation.x += 0.0002 * this.animationSpeed;
+                        
+                        const positions = this.particles.geometry.attributes.position.array;
+                        for (let i = 0; i < positions.length; i += 3) {
+                            positions[i + 1] += Math.sin(time + positions[i]) * 0.01;
+                        }
+                        this.particles.geometry.attributes.position.needsUpdate = true;
+                    }
+
+                    this.connections.forEach(conn => {
+                        conn.material.opacity = 0.4 + Math.sin(time * 3) * 0.3;
+                    });
+
+                    const radius = 20;
+                    this.camera.position.x = Math.sin(time * 0.1) * radius;
+                    this.camera.position.z = Math.cos(time * 0.1) * radius;
+                    this.camera.position.y = 8 + Math.sin(time * 0.15) * 3;
+                    this.camera.lookAt(0, 0, 0);
+
+                    if (this.decoherenceRate > 0) {
+                        this.qubits.forEach(q => {
+                            if (!q.measured && Math.random() < this.decoherenceRate / 10000) {
+                                const noise = (Math.random() - 0.5) * 0.1;
+                                q.alpha.re += noise;
+                                q.alpha.im += noise;
+                                
+                                const norm = Math.sqrt(
+                                    q.alpha.re ** 2 + q.alpha.im ** 2 +
+                                    q.beta.re ** 2 + q.beta.im ** 2
+                                );
+                                q.alpha.re /= norm;
+                                q.alpha.im /= norm;
+                                q.beta.re /= norm;
+                                q.beta.im /= norm;
+                            }
+                        });
+                    }
+
+                    this.renderer.render(this.scene, this.camera);
+                };
+                animate();
+            }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>

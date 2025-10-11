@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bharat Raksha - AI-Powered Aerospace Surveillance</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="radar-sweep"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <i class="fas fa-shield-alt logo-icon"></i>
+                <div class="logo-text">
+                    <h1>Bharat Raksha</h1>
+                    <p>🇮🇳 Aatmanirbhar Aerospace Surveillance</p>
+                </div>
+            </div>
+            <div class="status-indicators">
+                <div class="status-item" id="aiStatus">
+                    <i class="fas fa-brain"></i>
+                    <span>AI: <span class="status-value">Active</span></span>
+                </div>
+                <div class="status-item" id="blockchainStatus">
+                    <i class="fas fa-link"></i>
+                    <span>Blockchain: <span class="status-value">Verified</span></span>
+                </div>
+                <div class="status-item" id="quantumStatus">
+                    <i class="fas fa-atom"></i>
+                    <span>Quantum: <span class="status-value">Enhanced</span></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="dashboard">
+        <!-- Control Panel -->
+        <section class="control-panel">
+            <h2><i class="fas fa-satellite-dish"></i> Surveillance Control</h2>
+            
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <h3>Upload Surveillance Image</h3>
+                    <p>Drop image here or click to browse</p>
+                    <input type="file" id="fileInput" accept="image/*" hidden>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="detectObjects()">
+                        <i class="fas fa-search"></i> Detect Objects
+                    </button>
+                    <button class="btn btn-secondary" onclick="processEOIR()">
+                        <i class="fas fa-camera"></i> EO/IR Process
+                    </button>
+                    <button class="btn btn-thermal" onclick="processThermal()">
+                        <i class="fas fa-fire"></i> Thermal View
+                    </button>
+                </div>
+            </div>
+
+            <!-- Image Preview -->
+            <div class="image-preview" id="imagePreview" style="display:none;">
+                <h3>Preview</h3>
+                <img id="previewImage" alt="Preview">
+                <canvas id="detectionCanvas"></canvas>
+            </div>
+        </section>
+
+        <!-- Statistics Dashboard -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-crosshairs"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="totalDetections">0</h3>
+                    <p>Total Detections</p>
+                </div>
+            </div>
+
+            <div class="stat-card threat-card">
+                <div class="stat-icon critical">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="criticalThreats">0</h3>
+                    <p>Critical Threats</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-cubes"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="blockchainBlocks">0</h3>
+                    <p>Blockchain Blocks</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="quantumBoost">15%</h3>
+                    <p>Quantum Enhancement</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detection Results -->
+        <section class="detection-panel">
+            <h2><i class="fas fa-chart-line"></i> Real-time Detection Feed</h2>
+            <div class="detection-feed" id="detectionFeed">
+                <div class="no-data">
+                    <i class="fas fa-radar"></i>
+                    <p>Awaiting surveillance data...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Threat Analysis -->
+        <section class="threat-analysis">
+            <h2><i class="fas fa-shield-virus"></i> Threat Analysis</h2>
+            <div class="threat-chart">
+                <canvas id="threatChart"></canvas>
+            </div>
+            <div class="threat-legend" id="threatLegend">
+                <div class="legend-item low">
+                    <span class="legend-color"></span>
+                    <span>Low: <span id="lowCount">0</span></span>
+                </div>
+                <div class="legend-item medium">
+                    <span class="legend-color"></span>
+                    <span>Medium: <span id="mediumCount">0</span></span>
+                </div>
+                <div class="legend-item high">
+                    <span class="legend-color"></span>
+                    <span>High: <span id="highCount">0</span></span>
+                </div>
+                <div class="legend-item critical">
+                    <span class="legend-color"></span>
+                    <span>Critical: <span id="criticalCount">0</span></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Blockchain Audit Trail -->
+        <section class="blockchain-panel">
+            <h2><i class="fas fa-link"></i> Blockchain Audit Trail</h2>
+            <div class="blockchain-controls">
+                <button class="btn btn-small" onclick="verifyBlockchain()">
+                    <i class="fas fa-check-double"></i> Verify Integrity
+                </button>
+                <button class="btn btn-small" onclick="loadBlockchain()">
+                    <i class="fas fa-sync-alt"></i> Refresh Chain
+                </button>
+            </div>
+            <div class="blockchain-feed" id="blockchainFeed">
+                <div class="no-data">
+                    <i class="fas fa-cubes"></i>
+                    <p>Loading blockchain...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quantum Metrics -->
+        <section class="quantum-panel">
+            <h2><i class="fas fa-atom"></i> Quantum Computing Metrics</h2>
+            <div class="quantum-metrics" id="quantumMetrics">
+                <div class="metric-item">
+                    <label>Quantum State Vector</label>
+                    <canvas id="quantumStateChart"></canvas>
+                </div>
+                <div class="metric-item">
+                    <label>Entanglement Score</label>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="entanglementBar" style="width: 0%"></div>
+                    </div>
+                    <span id="entanglementValue">0.00</span>
+                </div>
+                <div class="metric-item">
+                    <label>Superposition Probability</label>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="superpositionBar" style="width: 0%"></div>
+                    </div>
+                    <span id="superpositionValue">0.00</span>
+                </div>
+                <div class="metric-item">
+                    <label>Inference Boost Factor</label>
+                    <div class="boost-display" id="boostDisplay">1.00x</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Notification System -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Processing surveillance data...</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>🇮🇳 Bharat Raksha © 2025 | Aatmanirbhar India Initiative | Powered by Indigenous Technology</p>
+        <p>Gemini AI • Blockchain • Quantum Computing • BrainyPi</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
